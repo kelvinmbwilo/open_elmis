@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ This program is part of the OpenLMIS logistics management information system platform software.
+  ~ Copyright © 2013 VillageReach
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+  ~  
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org. 
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.1.xsd
+                           http://www.springframework.org/schema/tx
+                           http://www.springframework.org/schema/tx/spring-tx-4.1.xsd">
+
+    <context:annotation-config/>
+    <context:spring-configured/>
+
+    <context:component-scan base-package="org.openlmis.db"/>
+
+    <tx:annotation-driven transaction-manager="openLmisTransactionManager"/>
+
+    <bean id="openLmisTransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource">
+            <ref bean="openlmisDataSource"/>
+        </property>
+    </bean>
+
+    <bean id="openlmisDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+        <property name="driverClass" value="${jdbc.driverClassName}"/>
+        <property name="jdbcUrl" value="${openlmis.jdbc.url}"/>
+        <property name="user" value="${openlmis.jdbc.username}"/>
+        <property name="password" value="${openlmis.jdbc.password}"/>
+        <property name="maxPoolSize" value="${openlmis.conn.pool.maxPoolSize}"/>
+        <property name="acquireIncrement" value="${openlmis.conn.pool.acquireIncrement}"/>
+        <property name="acquireRetryAttempts" value="${openlmis.conn.pool.acquireRetryAttempts}"/>
+        <property name="acquireRetryDelay" value="${openlmis.conn.pool.acquireRetryDelay}"/>
+        <property name="debugUnreturnedConnectionStackTraces"
+                  value="${openlmis.conn.pool.debugUnreturnedConnectionStackTraces}"/>
+        <property name="idleConnectionTestPeriod" value="${openlmis.conn.pool.idleConnectionTestPeriod}"/>
+        <property name="initialPoolSize" value="${openlmis.conn.pool.initialPoolSize}"/>
+        <property name="maxConnectionAge" value="${openlmis.conn.pool.maxConnectionAge}"/>
+        <property name="maxIdleTime" value="${openlmis.conn.pool.maxIdleTime}"/>
+        <property name="maxIdleTimeExcessConnections" value="${openlmis.conn.pool.maxIdleTimeExcessConnections}"/>
+        <property name="maxStatements" value="${openlmis.conn.pool.maxStatements}"/>
+        <property name="maxStatementsPerConnection" value="${openlmis.conn.pool.maxStatementsPerConnection}"/>
+        <property name="minPoolSize" value="${openlmis.conn.pool.minPoolSize}"/>
+        <property name="numHelperThreads" value="${openlmis.conn.pool.numHelperThreads}"/>
+        <property name="statementCacheNumDeferredCloseThreads"
+                  value="${openlmis.conn.pool.statementCacheNumDeferredCloseThreads}"/>
+        <property name="testConnectionOnCheckin" value="${openlmis.conn.pool.testConnectionOnCheckin}"/>
+        <property name="unreturnedConnectionTimeout" value="${openlmis.conn.pool.unreturnedConnectionTimeout}"/>
+    </bean>
+
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="openlmisDataSource"/>
+        <property name="typeHandlersPackage" value="org.openlmis.core.repository.typehandler"/>
+    </bean>
+
+    <bean id="myBatisMapperScanner" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="org.openlmis*"/>
+        <property name="annotationClass" value="org.springframework.stereotype.Repository"/>
+    </bean>
+
+</beans>

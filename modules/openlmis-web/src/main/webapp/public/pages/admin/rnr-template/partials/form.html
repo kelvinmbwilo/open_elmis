@@ -1,0 +1,178 @@
+<!--
+  ~ This program is part of the OpenLMIS logistics management information system platform software.
+  ~ Copyright © 2013 VillageReach
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+  ~  
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org. 
+  -->
+
+<div tab-scroll>
+  <h2 openlmis-message="requisition.template.header"></h2>
+
+  <div class="info-box">
+    <div class="pull-right">
+      <div class="form-cell">
+        <div class="checkbox">
+          <label for="enableIvd">
+            <input class="checkbox"
+                   ng-model="program.enableIvdForm"
+                   id="enableIvd" type="checkbox"/>
+            <span class="col-desc" openlmis-message="admin.program.enable.ivd"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <p><strong openlmis-message="template.programName"></strong> {{program.name}} <a ng-href="{{selectProgramUrl}}" openlmis-message="template.change"></a>
+    </p>
+
+
+  </div>
+
+  <div class="rnr-tabs clearfix">
+    <ul class="clearfix">
+      <li ng-class="{'selected': (visibleTab == 'basic')}">
+        <a href="" ng-click="visibleTab ='basic'" ><span openlmis-message="admin.label.program.settings"></span></a></li>
+      <li ng-class="{'selected': (visibleTab == 'template' || visibleTab == undefined)}">
+        <a href="" ng-click="visibleTab ='template'" ><span openlmis-message="admin.label.template"></span></a></li>
+      <li ng-show="program.enableIvdForm" ng-class="{'selected': (visibleTab == 'coverage')}">
+        <a href="" ng-click="visibleTab ='coverage'" ><span openlmis-message="label.vaccine.setting.coverage"></span></a></li>
+      <li ng-show="program.enableIvdForm" ng-class="{'selected': (visibleTab == 'ivdTabs')}">
+        <a href="" ng-click="visibleTab ='ivdTabs'" ><span openlmis-message="label.vaccine.tab.visibility"></span></a></li>
+      <li ng-show="program.enableIvdForm" ng-class="{'selected': (visibleTab == 'ivdLogisticTemplate')}">
+        <a href="" ng-click="visibleTab ='ivdLogisticTemplate'" ><span openlmis-message="label.vaccine.logistics.template"></span></a></li>
+    </ul>
+  </div>
+  <span ng-show="visibleTab == 'template' || visibleTab == undefined">
+
+    <h4>
+      <span openlmis-message="admin.label.template"></span>
+    </h4>
+
+  <div class="rnr-template-head">
+    <span class="tpl-visible" openlmis-message="template.header.display"></span>
+    <span class="tpl-indicator">&nbsp;</span>
+    <span class="tpl-label" openlmis-message="template.header.label"></span>
+    <span class="tpl-source" openlmis-message="template.header.source"></span>
+  </div>
+
+
+  <form name="configureRnRTemplateForm" ng-submit="save()">
+    <div class="rnr-template-columns">
+
+      <ul id="not-sortable">
+        <li id="{{rnrColumn.name}}" ng-repeat="rnrColumn in rnrNonSortableColumns">
+          <span class="tpl-visible">
+            <input type="checkbox" ng-model="rnrColumn.visible" ng-change="setArithmeticValidationMessageShown()" ng-disabled="rnrColumn.mandatory"/>
+          </span>
+          <span class="tpl-indicator">
+            <div class="indicator" openlmis-message="rnrColumn.indicator"></div>
+          </span>
+          <span class="tpl-label">
+            <input name="label" type="text" ng-model="rnrColumn.label" required maxlength="200"/>
+            <span class="col-desc" openlmis-message="rnrColumn.description"></span>
+          </span>
+          <span class="tpl-source">
+            <span ng-show="rnrColumn.sourceConfigurable">
+              <select ng-model="rnrColumn.source.code" ng-options="c.code as getMessage(c.description) for c in sources"
+                      ng-change="setArithmeticValidationMessageShown()">
+              </select>
+            </span>
+            <span ng-hide="rnrColumn.sourceConfigurable" openlmis-message="rnrColumn.source.description"></span>
+            <br/>
+            <a class="rnr-column-formula" href="" ng-show="rnrColumn.formula" openlmis-message="rnrColumn.formula"></a>
+          </span>
+          <span class="tpl-option">
+            <span ng-show="rnrColumn.configuredOption">
+              <select ng-model="rnrColumn.configuredOption" ng-options="o as getMessage(o.label) for o in rnrColumn.rnrColumnOptions" >
+              </select>
+            </span>
+          </span>
+          <span class="tpl-error" ng-show="errorMap[rnrColumn.name]">
+            <div class="alert alert-error" ng-bind="errorMap[rnrColumn.name]"></div>
+          </span>
+        </li>
+      </ul>
+
+      <ul ui-sortable ng-model="rnrSortableColumns" id="sortable">
+        <li id="{{rnrColumn.name}}" ng-repeat="rnrColumn in rnrSortableColumns">
+          <div class="drag-handle"></div>
+          <span class="tpl-visible">
+            <input type="checkbox" ng-model="rnrColumn.visible" ng-change="setArithmeticValidationMessageShown()" ng-disabled="rnrColumn.mandatory"/>
+          </span>
+          <span class="tpl-indicator">
+            <div class="indicator" openlmis-message="rnrColumn.indicator"></div>
+          </span>
+          <span class="tpl-label">
+            <input name="label" type="text" ng-model="rnrColumn.label" required maxlength="200"/>
+            <span class="col-desc" openlmis-message="rnrColumn.description"></span>
+          </span>
+          <span class="tpl-source">
+            <span ng-show="rnrColumn.sourceConfigurable">
+              <select ng-model="rnrColumn.source.code" ng-options="c.code as getMessage(c.description) for c in sources"
+                      ng-change="setArithmeticValidationMessageShown()">
+              </select>
+            </span>
+            <span ng-hide="rnrColumn.sourceConfigurable" openlmis-message="rnrColumn.source.description"></span>
+            <br/>
+            <a class="rnr-column-formula" href="" ng-show="rnrColumn.formula" openlmis-message="rnrColumn.formula"></a>
+          </span>
+          <span class="tpl-option">
+            <span ng-show="rnrColumn.configuredOption">
+              <select ng-model="rnrColumn.configuredOption" ng-options="o as getMessage(o.label) for o in rnrColumn.rnrColumnOptions" >
+              </select>
+            </span>
+          </span>
+
+          <span class="tpl-source" ng-show="rnrColumn.options.formulas != undefined">
+              <span openlmis-message="rnrColumn.column.options"></span>
+              <select ng-model="rnrColumn.calculationOption" ng-options="option.id as option.name for option in rnrColumn.options.formulas">
+                  <option ng-repeat="option in rnrColumn.options.formulas" value="{{ option.id }}">{{option.name}}</option>
+            </select>
+          </span>
+          <span class="tpl-error" ng-show="errorMap[rnrColumn.name]">
+            <div class="alert alert-error" ng-bind="errorMap[rnrColumn.name]"></div>
+          </span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="alert alert-info arithmetic-valid-msg" ng-show="arithmeticValidationMessageShown">
+      <div class="row-fluid">
+        <div class="span9">
+            <span openlmis-message="message.arithmeticValidation.status"></span>
+            <strong openlmis-message="arithmeticValidationStatusLabel"></strong>.
+            <span ng-show="arithmeticValidationMessage" openlmis-message="arithmeticValidationMessage"></span>
+        </div>
+        <div class="span3">
+          <a href="" class="btn btn-primary btn-mini pull-right"
+             ng-click="toggleValidateFormulaFlag()" openlmis-message="message.arithmeticValidation.toggle|arithmeticValidationToggleLabel"></a>
+        </div>
+      </div>
+    </div>
+
+
+    <div form-toolbar id="action_buttons" class="action-buttons">
+      <div class="form-cell button-row">
+        <input type="submit" class="btn btn-primary save-button" openlmis-message="button.save"/>
+        <a ng-href="{{selectProgramUrl}}" class="btn btn-cancel cancel-button" openlmis-message="button.cancel"></a>
+      </div>
+      <div class="toolbar-error" id="saveErrorMsgDiv" openlmis-message="error" ng-show="error"></div>
+    </div>
+  </form>
+  </span>
+  <span ng-show="visibleTab == 'basic'">
+    <div ng-include="'/public/pages/admin/rnr-template/partials/basic-settings.html'"></div>
+  </span>
+  <span ng-show="visibleTab == 'coverage'">
+    <div ng-include="'/public/pages/admin/rnr-template/partials/coverage.html'"></div>
+  </span>
+   <span ng-show="visibleTab == 'ivdTabs'">
+    <div ng-include="'/public/pages/admin/rnr-template/partials/tab-settings.html'"></div>
+  </span>
+  <span ng-show="visibleTab == 'ivdLogisticTemplate'">
+    <div ng-include="'/public/pages/admin/rnr-template/partials/ivd-column-template.html'"></div>
+  </span>
+</div>

@@ -1,0 +1,12 @@
+{
+    "podLineItems": [
+        {
+            "productCode": "",
+            "quantityReceived": "",
+            "quantityReturned": ""
+        }
+    ],
+    "deliveredBy": "",
+    "receivedBy" : "",
+    "receivedDate": ""
+}

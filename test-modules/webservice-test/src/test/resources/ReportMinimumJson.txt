@@ -1,0 +1,15 @@
+{
+       "agentCode": "",
+       "programCode": "",
+       "products": [
+           {
+               "productCode": "",
+               "beginningBalance": "",
+               "quantityDispensed": "",
+               "quantityReceived": "",
+               "stockInHand": "",
+               "newPatientCount": "",
+               "stockOutDays": ""
+           }
+       ]
+   }

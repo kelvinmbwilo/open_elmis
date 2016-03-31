@@ -1,0 +1,88 @@
+/*
+ * This program is part of the OpenLMIS logistics management information system platform software.
+ * Copyright © 2013 VillageReach
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *  
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+ * You should have received a copy of the GNU Affero General Public License along with this program.  If not, see http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org. 
+ */
+
+apply plugin: 'jetty'
+
+
+dependencies {
+    compile 'org.seleniumhq.selenium:selenium-java:2.45.0',
+            'org.seleniumhq.selenium:selenium-firefox-driver:2.45.0',
+            'org.seleniumhq.selenium:selenium-ie-driver:2.45.0',
+            'org.seleniumhq.selenium:selenium-chrome-driver:2.45.0',
+            'net.sf.json-lib:json-lib:0.9',
+            'org.postgresql:postgresql:9.2-1002-jdbc4',
+            'org.codehaus.jackson:jackson-mapper-asl:1.9.9',
+            project(':test-modules:test-core'),
+            project(':test-modules:functional-tests'),
+            project(':modules:rest-api')
+
+    testCompile 'org.springframework:spring-test:4.1.5.RELEASE',
+            'org.testng:testng:6.8.21',
+            'com.google.inject:guice:3.0',
+            'net.sf.json-lib:json-lib:0.9',
+            'org.postgresql:postgresql:9.2-1002-jdbc4',
+            'org.codehaus.jackson:jackson-mapper-asl:1.9.9',
+            project(':test-modules:test-core'),
+            project(':test-modules:functional-tests'),
+            project(':modules:rest-api')
+
+    testCompile("org.uncommons:reportng:1.1.2") {
+        exclude group: "org.testng", module: "testng"
+    }
+}
+
+String connectionString = "$dbUrlPrefix$databaseHostName:$databasePort/$dbName"
+
+test {
+    exclude '**/org/openlmis/functional/*.*'
+}
+
+task buildOpenLmis(type: GradleBuild) {
+    buildFile = '../../modules/openlmis-web/build.gradle'
+    tasks = ['jettyRun']
+}
+
+task webservicetest(type: Test) {
+    useTestNG() {
+        systemProperties['dbUrl'] = connectionString
+        systemProperties['baseurl'] = "$baseurl"
+
+        suites 'src/test/java/org/openlmis/functional/testng-webservicetest.xml'
+    }
+    options {
+        listeners << 'org.uncommons.reportng.HTMLReporter'
+        listeners << 'org.uncommons.reportng.JUnitXMLReporter'
+    }
+    workingDir = 'build/'
+}
+
+webservicetest.doFirst() {
+    buildOpenLmis.execute()
+}
+
+task webserviceSmokeTest(type: Test) {
+    useTestNG() {
+        systemProperties['dbUrl'] = connectionString
+        systemProperties['baseurl'] = "$baseurl"
+
+        suites 'src/test/java/org/openlmis/functional/testng-webserviceSmokeTest.xml'
+    }
+    options {
+        listeners << 'org.uncommons.reportng.HTMLReporter'
+        listeners << 'org.uncommons.reportng.JUnitXMLReporter'
+    }
+    workingDir = 'build/'
+}
+
+webserviceSmokeTest.doFirst() {
+    buildOpenLmis.execute()
+}
+
+

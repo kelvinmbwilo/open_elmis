@@ -1,0 +1,61 @@
+<!--
+  ~ This program is part of the OpenLMIS logistics management information system platform software.
+  ~ Copyright © 2013 VillageReach
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+  ~  
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org. 
+  -->
+
+<div>
+<h2 openlmis-message="label.program.product"></h2>
+
+<div class="row-fluid program-isa">
+    <div class="span6 form-inline">
+        <label for="program"><span openlmis-message="program.header"></span>:</label>
+        <select id="program" name="program" ng-model="programId" ng-options="i.id as i.name for i in programs"
+                ng-change="loadProgramProducts()">
+            <option value="" openlmis-message="label.select.program"></option>
+        </select>
+    </div>
+    <div class="span6 search-box-gap" ng-show="programId">
+        <input id="searchProduct" class="search-query pull-right" ng-change="filterProducts()" type="text"
+               ng-model="query" openlmis-message="placeholder.search.product"/>
+    </div>
+</div>
+
+<div ng-show="programId">
+    <div class="alert alert-success" id="saveSuccessMsgDiv" openlmis-message="message" ng-show="message"></div>
+
+    <div class="alert alert-info" id="noProductsMappedError" ng-show="programProducts.length==0"
+         openlmis-message="message.no.products.mapped">
+    </div>
+
+    <div class="list-header-container" ng-show="programProducts.length">
+        <div class="row-fluid list-header">
+            <div class="span4">
+                <span id='productNameLabel' class="first-column" openlmis-message="label.product.name"></span>
+            </div>
+            <div class="span8" openlmis-message="label.isa.formula"></div>
+        </div>
+    </div>
+
+    <div class="list-container">
+        <div class="row-fluid list-row" ng-repeat="programProduct in filteredProducts">
+            <div id="productPrimaryName" class="span4">
+                <span class="first-column" ng-bind="programProduct.product.primaryName"></span>
+            </div>
+            <div id="programProductFormula" class="span4" ng-bind="programProduct.formula"></div>
+            <div class="span2 offset2">
+                <input id='editButton{{$index}}' openlmis-message="edit.values" type="button"
+                       class="btn btn-small btn-primary"
+                       ng-click="showProductISA(programProduct)"/>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <div isa-coefficient-modal></div>
+
+</div>

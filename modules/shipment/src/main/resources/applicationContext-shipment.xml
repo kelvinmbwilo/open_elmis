@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ This program is part of the OpenLMIS logistics management information system platform software.
+  ~ Copyright © 2013 VillageReach
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+  ~  
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+  ~ You should have received a copy of the GNU Affero General Public License along with this program.  If not, see http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org. 
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:int-file="http://www.springframework.org/schema/integration/file"
+       xmlns:int="http://www.springframework.org/schema/integration"
+       xmlns:int-jdbc="http://www.springframework.org/schema/integration/jdbc"
+       xmlns:camel="http://camel.apache.org/schema/spring"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+                           http://www.springframework.org/schema/context
+                           http://www.springframework.org/schema/context/spring-context-4.1.xsd
+                           http://www.springframework.org/schema/context
+                           http://www.springframework.org/schema/integration
+                           http://www.springframework.org/schema/integration/file
+       	                   http://www.springframework.org/schema/integration/file/spring-integration-file.xsd
+                           http://www.springframework.org/schema/integration/jdbc
+                           http://www.springframework.org/schema/integration/jdbc/spring-integration-jdbc.xsd
+                           http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <context:annotation-config/>
+  <context:spring-configured/>
+
+
+  <camel:camelContext id="camelContext">
+    <camel:template id="camelTemplate"/>
+  </camel:camelContext>
+
+  <context:component-scan base-package="org.openlmis.shipment"/>
+    <context:component-scan base-package="org.openlmis.pod"/>
+    <context:component-scan base-package="org.openlmis.order"/>
+    <context:component-scan base-package="org.openlmis.fulfillment"/>
+
+
+  <import resource="classpath*:applicationContext-upload.xml"/>
+  <import resource="classpath*:applicationContext-core.xml"/>
+
+
+  <int-file:outbound-channel-adapter
+          channel="shipmentArchiveOutputChannel"
+          auto-create-directory="true"
+          temporary-file-suffix="temp"
+          directory="${shipment.dir.processed}"
+          filename-generator-expression="payload.name" />
+
+  <int:channel id="shipmentArchiveOutputChannel"/>
+
+
+
+  <int-file:outbound-channel-adapter
+          channel="shipmentErrorChannel"
+          auto-create-directory="true"
+          temporary-file-suffix="temp"
+          directory="${shipment.dir.error}"
+          filename-generator-expression="'error_'+ payload.name"/>
+
+  <int:channel id="shipmentErrorChannel"/>
+
+  <int-file:inbound-channel-adapter id="shipmentFileReader" channel="shipmentInputChannel" directory="${shipment.dir.incoming}">
+    <int:poller fixed-rate="5000" >
+    </int:poller>
+  </int-file:inbound-channel-adapter>
+
+  <int:outbound-channel-adapter channel="shipmentInputChannel" ref="shipmentFileProcessor" method="process"/>
+
+
+  <!--
+  <bean id="ftpSessionFactory"
+        class="org.springframework.integration.ftp.session.DefaultFtpSessionFactory">
+    <property name="host" value="${shipment.ftp.server.host}"/>
+    <property name="port" value="${shipment.ftp.server.port}"/>
+    <property name="username" value="${shipment.ftp.server.username}"/>
+    <property name="password" value="${shipment.ftp.server.password}"/>
+    <property name="clientMode" value="0"/>
+    <property name="fileType" value="2"/>
+    <property name="bufferSize" value="100000"/>
+  </bean>
+
+  <int-ftp:inbound-channel-adapter
+                                   channel="ftpInputChannel"
+                                   session-factory="ftpSessionFactory"
+                                   filename-pattern="*.csv"
+                                   auto-create-local-directory="true"
+                                   delete-remote-files="true"
+                                   remote-directory="${shipment.ftp.remote.directory}"
+                                   local-directory="${shipment.ftp.local.directory}">
+    <int:poller fixed-rate="${shipment.ftp.task.interval}" max-messages-per-poll="-1" task-executor=""/>
+  </int-ftp:inbound-channel-adapter>
+
+  <int:channel id="shipmentErrorChannel"/>
+
+  <int-ftp:outbound-channel-adapter
+                                    channel="shipmentErrorChannel"
+                                    remote-directory="${shipment.ftp.remote.error.directory}"
+                                    session-factory="ftpSessionFactory"
+                                    auto-create-directory="true"
+                                    temporary-file-suffix="temp"
+                                    remote-filename-generator-expression="'error_'+ payload.name"/>
+
+  <int:channel id="shipmentArchiveOutputChannel"/>
+
+  <int-ftp:outbound-channel-adapter
+                                    channel="shipmentArchiveOutputChannel"
+                                    remote-directory="${shipment.ftp.remote.archive.directory}"
+                                    session-factory="ftpSessionFactory"
+                                    auto-create-directory="true"
+                                    temporary-file-suffix="temp"
+                                    remote-filename-generator-expression="payload.name"/>
+
+
+  <int:outbound-channel-adapter channel="shipmentInputChannel" ref="shipmentFileProcessor" method="process"/> -->
+
+  <bean id="messageDispatcher" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+    <property name="corePoolSize" value="1"/>
+    <property name="maxPoolSize" value="1"/>
+    <property name="queueCapacity" value="-1"/>
+  </bean>
+
+  <int:channel id="shipmentInputChannel">
+    <int:dispatcher task-executor="messageDispatcher"></int:dispatcher>
+  </int:channel>
+
+  <int-jdbc:inbound-channel-adapter channel="orderInputChannel"
+                                    data-source="dataSource"
+                                    query="SELECT * FROM orders WHERE status = 'IN_ROUTE'"
+                                    row-mapper="orderRowMapper"
+                                    max-rows-per-poll="${max.orders.per.poll}">
+    <int:poller fixed-rate="${order.ftp.routing.poll.rate}">
+    </int:poller>
+  </int-jdbc:inbound-channel-adapter>
+
+  <int:channel id="orderInputChannel"/>
+
+  <int:service-activator input-channel="orderInputChannel" ref="orderFtpTask" method="processOrder"/>
+
+</beans>

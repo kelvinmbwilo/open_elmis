@@ -1,0 +1,10 @@
+{
+    "approverName" : "",
+    "products": [
+        {
+            "productCode": "",
+            "quantityApproved": "",
+            "remarks": ""
+        }
+    ]
+}
