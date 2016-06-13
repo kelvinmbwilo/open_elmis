@@ -42,7 +42,7 @@ function ReceiveStockController($scope,$filter,$http, Lot,StockCards,manufacture
     //react to scanning of barcode
     $scope.data = {};
     $scope.data.loading_item = false;
-    $scope.scanLotNumber = function(barcodeString){
+    $scope.scanLotNumber = function( ){
         $scope.barcode ={};
         if(barcodeString.length > 45){
             var n = barcodeString.lastIndexOf("21");
