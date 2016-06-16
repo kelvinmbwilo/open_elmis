@@ -24,7 +24,6 @@ function DistributionController($scope, $rootScope, deliveryZones, DeliveryZoneA
   $scope.close = function() {
     $rootScope.appCacheState = undefined;
   };
-
   $scope.loadPrograms = function () {
     $scope.programs = $scope.periods = [];
     DeliveryZoneActivePrograms.get({zoneId: $scope.selectedZone.id}, function (data) {

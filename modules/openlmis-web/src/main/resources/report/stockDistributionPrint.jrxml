@@ -186,6 +186,7 @@ WHERE vd.id =$P{ISSUE_ID}]]>
 					</textElement>
 					<textFieldExpression><![CDATA[$F{voucherNumber}]]></textFieldExpression>
 				</textField>
+
 			</band>
 		</groupHeader>
 		<groupFooter>
@@ -357,6 +358,10 @@ WHERE vd.id =$P{ISSUE_ID}]]>
 			<printWhenExpression><![CDATA[$V{PAGE_NUMBER}.intValue() == 1? new Boolean(true) : new Boolean(false)]]></printWhenExpression>
 			<image>
 				<reportElement x="11" y="2" width="80" height="62" uuid="595f0764-0a19-42cc-a6c1-f5d3ce283103"/>
+				<imageExpression><![CDATA[$P{image_dir}+ "logo-tz.png"]]></imageExpression>
+			</image>
+			<image>
+				<reportElement x="300" y="2" width="200" height="65" uuid="595f0764-0a19-42cc-a6c2-f5d3ce283103"/>
 				<imageExpression><![CDATA[$P{image_dir}+ "logo-tz.png"]]></imageExpression>
 			</image>
 			<image>

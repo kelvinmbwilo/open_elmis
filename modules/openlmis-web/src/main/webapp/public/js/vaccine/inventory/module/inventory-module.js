@@ -14,9 +14,11 @@ angular.module('vaccine-inventory', ['openlmis', 'ngTable','ui.bootstrap','angul
     .config(['$routeProvider', function ($routeProvider) {
         $routeProvider.
             when('/stock-adjustment', {controller:StockAdjustmentController, templateUrl:'partials/stock-adjustment.html',resolve:StockAdjustmentController.resolve}).
+            when('/stock-adjustment-barcode', {controller:StockAdjustmentController, templateUrl:'partials/stock-adjustment-barcode.html',resolve:BarcodeStockAdjustmentController.resolve}).
             when('/receive', {controller:ReceiveStockController, templateUrl:'partials/receive-stock.html',reloadOnSearch:false,resolve:ReceiveStockController.resolve}).
-            when('/receive_barcode', {controller:ReceiveStockController, templateUrl:'partials/receive-stock-barcode.html',reloadOnSearch:false,resolve:ReceiveStockController.resolve}).
+            when('/receive_barcode', {controller:ReceiveStockController, templateUrl:'partials/receive-stock-barcode.html',reloadOnSearch:false,resolve:BarcodeReceiveStockController.resolve}).
             when('/mass-distribution', {controller:MassDistributionController, templateUrl:'partials/mass-distribution.html',reloadOnSearch:false,resolve:MassDistributionController.resolve}).
+            when('/distribute_barcode', {controller:BarcodeMassDistributionController, templateUrl:'partials/mass-distribution-barcode.html',reloadOnSearch:false,resolve:BarcodeMassDistributionController.resolve}).
             when('/configuration', {controller:VaccineInventoryConfigurationController, templateUrl:'partials/configuration.html',reloadOnSearch:false,resolve:VaccineInventoryConfigurationController.resolve}).
             when('/vaccine-forecasting', {controller:VaccineForecastingController, templateUrl:'partials/vaccine-forecast.html',reloadOnSearch:false,resolve:VaccineForecastingController.resolve}).
             otherwise({redirectTo:'/stock-on-hand'});

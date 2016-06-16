@@ -358,6 +358,10 @@ WHERE sm.id = $P{ISSUE_ID}]]>
 				<imageExpression><![CDATA[$P{image_dir}+ "logo-tz.png"]]></imageExpression>
 			</image>
 			<image>
+				<reportElement x="300" y="2" width="200" height="65" uuid="595f0764-0a19-42cc-a6c2-f5d3ce283103"/>
+				<imageExpression><![CDATA["http://barcode.tec-it.com/barcode.ashx?data="+$F{voucherNumber}+"&code=Code128&dpi=96"]]></imageExpression>
+			</image>
+			<image>
 				<reportElement x="754" y="0" width="74" height="64" uuid="c383c1bc-a48f-40dd-a20f-d7916e3d3bea"/>
 				<imageExpression><![CDATA[$P{image_dir}+ "vims-logo-tz.png"]]></imageExpression>
 			</image>
