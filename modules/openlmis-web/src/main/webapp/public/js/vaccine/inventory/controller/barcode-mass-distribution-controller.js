@@ -378,28 +378,36 @@ function BarcodeMassDistributionController($scope,$http,$location, $document,$wi
         return parseInt(remainingDoses / (product.packaging.dosespervial));
     }
     //display the model for issuing
+    $scope.useBarcode = true;
     $scope.showIssueModal=function(facility, type){
-        $scope.facilityToIssue=angular.copy(facility);
-        $scope.facilityToIssue.type=type;
-        var rightNow = new Date();
-        $scope.facilityToIssue.displayIssueDate = (rightNow.getMonth() + 1) + '/' + rightNow.getDate() + '/' +  rightNow.getFullYear();
-        $scope.facilityToIssue.issueDate = $scope.formatDate(new Date());
-        $scope.issueModal=true;
-        $timeout(function(){
-            $("#barcode_string").focus();
-        });
-        if($scope.facilityToIssue.productsToIssueByCategory.length !== 0){
-            angular.forEach($scope.facilityToIssue.productsToIssueByCategory,function(lineItem,index){
-                if(lineItem.productCategory === "Vaccine"){
-                    $scope.productsInList = angular.copy(lineItem.productsToIssue);
-                    $scope.facilityToIssue.productsToIssueByCategory[index] = {};
-                    $scope.vaccineIndex = index;
-                }
+        if($scope.useBarcode){
+            $scope.facilityToIssue=angular.copy(facility);
+            $scope.facilityToIssue.type=type;
+            var rightNow = new Date();
+            $scope.facilityToIssue.displayIssueDate = (rightNow.getMonth() + 1) + '/' + rightNow.getDate() + '/' +  rightNow.getFullYear();
+            $scope.facilityToIssue.issueDate = $scope.formatDate(new Date());
+            $scope.issueModal=true;
+            $timeout(function(){
+                $("#barcode_string").focus();
             });
+            if($scope.facilityToIssue.productsToIssueByCategory.length !== 0){
+                angular.forEach($scope.facilityToIssue.productsToIssueByCategory,function(lineItem,index){
+                    if(lineItem.productCategory === "Vaccine"){
+                        $scope.productsInList = angular.copy(lineItem.productsToIssue);
+                        $scope.facilityToIssue.productsToIssueByCategory[index] = {};
+                        $scope.vaccineIndex = index;
+                    }
+                });
 
+            }else{
+                $scope.productsInList = [];
+            }
         }else{
-            $scope.productsInList = [];
+            $scope.facilityToIssue=angular.copy(facility);
+            $scope.facilityToIssue.type=type;
+            $scope.issueModal=true;
         }
+
 
 
     };

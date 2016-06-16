@@ -126,7 +126,7 @@
                                 <input ng-show="routineFacility.status ==='RECEIVED'"
                                        ng-click="showIssueModal(routineFacility,'EMERGENCE')"
                                        type="submit" class="btn btn-primary" openlmis-message="button.add">
-                                <br><span ng-show="(routineFacility.status !== 'RECEIVED' && routineFacility.status === undefined && routineFacility.status !=='PENDING')">Use Barcode: <input type="checkbox" ng-model="useBarcode"/></span>
+                                <br><span ng-show="routineFacility.status ==='RECEIVED'">Use Barcode: <input type="checkbox" ng-model="useBarcode"/></span>
                                 <input uib-popover="I appeared on mouse enter!" popover-trigger="mouseenter"
                                        ng-show="routineFacility.status === 'PENDING'"
                                        ng-click="showPODModal(routineFacility)"
@@ -188,11 +188,15 @@
     </div>
 
 
-    <div ng-controller="BarcodeBaSaveIssueController" id="popup-box" ng-form="issueForm" modal="issueModal"
+    <div ng-if="!useBarcode" ng-controller="SaveIssueController" id="popup-box" ng-form="issueForm" modal="issueModal"
          options="{'backdrop':'static', 'escape':false}"
          style="width:80% !important;margin-left:-40% !important;">
-        <div ng-if="" ng-include="'partials/mass-distribution-modal.html'"></div>
-        <div ng-include="'partials/mass-distribution-modal-barcode.html'"></div>
+        <div  ng-include="'partials/mass-distribution-modal.html'"></div>
+    </div>
+    <div ng-if="useBarcode" ng-controller="BarcodeBaSaveIssueController" id="popup-box" ng-form="issueForm" modal="issueModal"
+         options="{'backdrop':'static', 'escape':false}"
+         style="width:80% !important;margin-left:-40% !important;">
+        <div ng-if="useBarcode" ng-include="'partials/mass-distribution-modal-barcode.html'"></div>
     </div>
 
     <div ng-controller="SavePODController" id="popup-box2" ng-form="podForm" modal="podModal"
