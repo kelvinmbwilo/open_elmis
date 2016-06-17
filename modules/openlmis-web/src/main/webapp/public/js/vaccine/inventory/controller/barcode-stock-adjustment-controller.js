@@ -8,7 +8,7 @@
  * You should have received a copy of the Mozilla Public License along with this program. If not, see http://www.mozilla.org/MPL/
  */
 
-function BarcodeStockAdjustmentController($scope, $timeout,$window,$routeParams,StockCardsByCategory,configurations,StockEvent,localStorageService,homeFacility,VaccineAdjustmentReasons,UserFacilityList) {
+function BarcodeStockAdjustmentController($scope, $http, $timeout,$window,$routeParams,StockCardsByCategory,configurations,StockEvent,localStorageService,homeFacility,VaccineAdjustmentReasons,UserFacilityList) {
 
     //Get Home Facility
     $scope.currentStockLot = undefined;
@@ -18,10 +18,345 @@ function BarcodeStockAdjustmentController($scope, $timeout,$window,$routeParams,
     $scope.vvmStatuses=[{"value":"1","name":" 1 "},{"value":"2","name":" 2 "}];
     $scope.productsConfiguration=configurations.productsConfiguration;
     var AdjustmentReasons=[];
+    $scope.data = {};
+    $scope.data.allowMultipleScan = true;
+    $scope.useBarcode = true;
+    $timeout(function(){
+        $("#barcode_string").focus();
+    });
 
-    var loadStockCards=function(programId, facilityId){
+    //pull all gtin information
+    $http.get('/vaccine/gitn_lookup/all').success(function(data) {
+        $scope.gtin_lookups = data.gitn_lookup;
+    }).
+    error(function(data) {
+        console.log("Error:" + data);
+    });
+    $scope.data.loading_item = false;
+
+    //react to scanning of lot number
+    $scope.scanLotNumber = function(barcodeString){
+        if(barcodeString !== ""){
+            $scope.barcode ={};
+            $scope.barcode.lot_number = "";
+            $scope.barcode.gtin = "";
+            $scope.barcode.expiry = "";
+            if(barcodeString.length > 45){
+                var n = barcodeString.lastIndexOf("21");
+                $scope.barcode.expiry = barcodeString.substring(21,27);
+                $scope.barcode.gtin = barcodeString.substring(5,19);
+                $scope.barcode.lot_number = barcodeString.substring(29,n);
+            }else if(barcodeString.length >= 29){
+                $scope.barcode.lot_number = barcodeString.substring(29);
+                $scope.barcode.expiry = barcodeString.substring(21,27);
+                $scope.barcode.gtin = barcodeString.substring(5,19);
+            }else{
+                $scope.data.error_loading_gtin = true;
+                $scope.data.error_loading_item = false;
+                $scope.data.loading_item = false;
+            }
+
+            $scope.data.loading_item = true;
+            $scope.barcode.formatedDate = $scope.formatDate(new Date("20"+$scope.barcode.expiry.replace(/(.{2})/g,"$1-").slice(0, -1)));
+            $scope.current_item = $scope.getItemByGTIN($scope.barcode , $scope.productsInList);
+            if($scope.current_item.gtinInformation === false){
+                $scope.data.error_loading_gtin = true;
+                $timeout(function(){
+                    $scope.data.error_loading_gtin = false;
+                },2000);
+                $scope.data.error_loading_item = false;
+                $scope.data.loading_item = false;
+            }else{
+                $scope.data.error_loading_gtin = false;
+                $scope.data.error_loading_item = false;
+                $scope.data.loading_item = true;
+                if($scope.current_item.available === false){
+                    $scope.data.error_loading_item = true;
+                    $timeout(function(){
+                        $scope.data.error_loading_item = false;
+                    },2000);
+                    $scope.data.loading_item = false;
+                }else{
+
+                    $scope.data.error_loading_item = false;
+                    $scope.data.loading_item = false;
+                    $scope.data.show_singleItem = true;
+                    $scope.data.process_package = false;
+                }
+            }
+
+        }else{
+            $scope.data.error_loading_gtin = false;
+            $scope.data.error_loading_item = false;
+            $scope.data.loading_item = false;
+        }
+
+
+    };
+
+    //a function to format date from the GTIN String
+    $scope.formatDate = function (date) {
+        var d = new Date(date),
+            month = '' + (d.getMonth() + 1),
+            day = '' + d.getDate(),
+            year = d.getFullYear();
+
+        if (month.length < 2){ month = '0' + month;}
+        if (day.length < 2) { day = '0' + day; }
+
+        return [year, month, day].join('-');
+    };
+
+    //finding an item from the gtin Lookup table
+    $scope.getItemByGTIN = function(barcode_object,listItems){
+        var item = {available:false,gtinInformation:false};
+        angular.forEach($scope.gtin_lookups,function(packagingInformation){
+            if(barcode_object.gtin == packagingInformation.gtin){
+                item.gtinInformation = true;
+                angular.forEach(listItems,function(product){
+                    if(packagingInformation.productid == product.product.id){
+                        //append packaging information
+                        product.packaging = packagingInformation;
+
+                        //construct a lot
+                        var lots = angular.copy(product.lotsOnHand);
+                        angular.forEach(lots,function(productLot){
+                            if(productLot.lot.lotCode == barcode_object.lot_number && barcode_object.formatedDate == productLot.lot.expirationDate){
+                                item.available = true;
+                                console.log('nimeipata lot')
+                                //adding products to list of items to be displayed
+                                if(!$scope.stockCardsToDisplay[$scope.vaccineIndex].productCategory) {
+                                    $scope.stockCardsToDisplay[$scope.vaccineIndex].productCategory = "Vaccine";
+                                    $scope.stockCardsToDisplay[$scope.vaccineIndex].stockCards = [];
+                                }
+                                if($scope.checkProductInList($scope.stockCardsToDisplay[$scope.vaccineIndex].stockCards, product.product.id)){
+                                    angular.forEach($scope.stockCardsToDisplay[$scope.vaccineIndex].stockCards, function(item){
+                                        if(item.product.id == packagingInformation.productid){
+                                            if($scope.checkLOtInList(item.lotsOnHand,barcode_object.lot_number)){
+                                                angular.forEach(item.lotsOnHand,function(singleLot){
+                                                    if(singleLot.lot.lotCode == barcode_object.lot_number){
+                                                        if($scope.data.allowMultipleScan){
+                                                            singleLot.boxes++;
+                                                            console.log(JSON.stringify(singleLot));
+                                                            $scope.updateCurrentTotal1(item,singleLot);
+                                                        }
+                                                    }
+
+                                                });
+                                            }else{
+                                                if($scope.data.allowMultipleScan){
+                                                    productLot.boxes = 1;
+                                                    productLot.vials = 0;
+                                                    item.lotsOnHand.push(productLot);
+                                                    var indexToUse = item.lotsOnHand.length -1;
+                                                    $scope.updateCurrentTotal1(item,item.lotsOnHand[indexToUse]);
+                                                }else{
+                                                    productLot.boxes = 0;
+                                                    productLot.vials = 0;
+                                                    item.lotsOnHand.push(productLot);
+                                                }
+
+                                            }
+                                        }
+                                    });
+                                    //if it is a new item completely.
+                                }else{
+                                    var productToPush = angular.copy(product);
+                                    productToPush.lotsOnHand = [];
+                                    if($scope.data.allowMultipleScan){
+                                        productToPush.boxes = 1;
+                                        productToPush.vials = 0;
+                                        productLot.boxes = 1;
+                                        productLot.vials = 0;
+                                        productToPush.lotsOnHand.push(productLot);
+                                        $scope.updateCurrentTotal1(productToPush,productLot);
+                                        $scope.stockCardsToDisplay[$scope.vaccineIndex].stockCards.push(productToPush);
+                                        console.log(JSON.stringify($scope.stockCardsToDisplay[$scope.vaccineIndex].stockCards[0].lotsOnHand[0]))
+
+                                    }else{
+                                        productToPush.boxes = 0;
+                                        productToPush.vials = 0;
+                                        productLot.boxes = 0;
+                                        productLot.vials = 0;
+                                        productToPush.lotsOnHand.push(productLot);
+                                        $scope.stockCardsToDisplay[$scope.vaccineIndex].stockCards.push(productToPush);
+                                    }
+
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+        });
+        $("#barcode_string").val('');
+        angular.element(jQuery('#barcode_string')).triggerHandler('input');
+        return item;
+    };
+
+    //update the stock adjustment reason for each update
+    ///////////////////////////////////////////////////////
+    $scope.defaultAdjustmentAmount = function(lot){
+        //procedure to show the modal
+        $scope.oldAdjustmentReason = angular.copy(lot.AdjustmentReasons);
+        $scope.currentStockLot = lot;
+        $scope.currentStockLot.adjustmentReasons=((lot.adjustmentReasons === undefined)?[]:lot.adjustmentReasons);
+        //Remove reason already exist from drop down
+        reEvaluateTotalAdjustmentReasons();
+        updateAdjustmentReasonForLot(lot.adjustmentReasons);
+
+        //calling the save adjustment reason
+        var adjustmentReason={};
+        adjustmentReason.type = $scope.adjustmentReasonsToDisplay[0];
+        adjustmentReason.name = $scope.adjustmentReasonsToDisplay[0].name;
+        adjustmentReason.quantity= Math.abs(lot.quantity - lot.quantityOnHand);
+        $scope.currentStockLot.adjustmentReasons = [];
+        $scope.currentStockLot.adjustmentReasons.push(adjustmentReason);
+        updateAdjustmentReasonForLot($scope.currentStockLot.adjustmentReasons);
+        reEvaluateTotalAdjustmentReasons();
+
+    };
+
+    $scope.checkProductInList = function(list,productID){
+        var data = false;
+        angular.forEach(list,function(product){
+            if(productID == product.product.id){
+                data = true;
+            }
+        });
+        return data;
+    };
+
+    $scope.checkLOtInList = function(list,lotcode){
+        var data = false;
+        angular.forEach(list,function(product){
+            if(lotcode == product.lot.lotCode){
+                data = true;
+            }
+        });
+        return data;
+    };
+
+    //get Maximum number of boxes one can have per product based on amount on store
+    $scope.getMaximumBoxes = function(product,quantityOnHand){
+        return parseInt(quantityOnHand / (product.packaging.dosespervial * product.packaging.vialsperbox));
+    };
+    //get Maximum number of lose vials one can have
+    $scope.getMaximumLoseVials = function(product,quantityOnHand,boxes){
+        var dosesOnBoxes = boxes*product.packaging.dosespervial * product.packaging.vialsperbox;
+        var remainingDoses = quantityOnHand - dosesOnBoxes;
+        return parseInt(remainingDoses / (product.packaging.dosespervial));
+    }
+
+    //update the number of doses when there is a change in boxes and lose vials
+    $scope.updateCurrentTotal1  = function(product,lot){
+        var vials_per_box = product.packaging.vialsperbox;
+        var doses_per_vials = product.packaging.dosespervial;
+        console.log("single lot:",lot)
+        if(lot){
+            var boxes = (lot.boxes === '')?0:lot.boxes;
+            var vials = (lot.vials === '')?0:lot.vials;
+            var num = 0;
+            if(boxes != 0){
+                num += boxes*vials_per_box*doses_per_vials;
+                console.log("result:",num)
+            }if(vials != 0){
+                if(vials >= vials_per_box){
+                    lot.boxes = lot.boxes + Math.floor(vials / vials_per_box)
+                    vials = vials % vials_per_box;
+                    lot.vials = vials % vials_per_box;
+                }
+                num += doses_per_vials*vials;
+                console.log("vial result:",num)
+            }
+            console.log("result:",num)
+            lot.quantity = num;
+            var totalCurrentLots = 0;
+            if(product.lots !== undefined)
+            {
+                $(product.lots).each(function (index, lotObject) {
+                    if(lotObject.quantity !== undefined && lotObject.quantity !== null){
+                        totalCurrentLots = totalCurrentLots + parseInt(lotObject.quantity,10);
+                    }
+                });
+                product.quantity=totalCurrentLots;
+            }
+            else{
+                product.quantity=product.quantity;
+            }
+            $scope.defaultAdjustmentAmount(lot);
+        }else{
+            var boxes = (product.boxes === '')?0:product.boxes;
+            var vials = (product.vials === '')?0:product.vials;
+            var num = 0;
+            if(boxes != 0){
+                num += boxes*vials_per_box*doses_per_vials;
+            }if(vials != 0){
+                num += doses_per_vials*vials;
+            }
+            product.quantity = num;
+        }
+
+
+    };
+
+    //update the total doses for the product and the boxes and vials for a updated value
+    $scope.updateCurrentTotal=function(product,lot){
+        var vials_per_box = product.packaging.vialsperbox;
+        var doses_per_vials = product.packaging.dosespervial;
+        var dosesInBox = vials_per_box*doses_per_vials;
+
+        //update boxes and vials as doses change
+        if(lot){
+            lot.boxes = parseInt(lot.quantity / dosesInBox);
+            lot.vials = lot.quantity % dosesInBox;
+            $scope.defaultAdjustmentAmount(lot);
+        }else{
+            product.boxes = parseInt(product.quantity / dosesInBox);
+            product.vials = product.quantity % dosesInBox;
+        }
+    };
+
+    //method to control switching between barcode and normal
+    $scope.switchBarcodeToNormal = function(){
+        if($scope.userPrograms.length > 1)
+        {
+            $scope.showPrograms=true;
+            //TODO: load stock cards on program change
+            $scope.selectedProgramId=$scope.userPrograms[0].id;
+            loadStockCards(parseInt($scope.selectedProgramId,10),parseInt($scope.selectedFacilityId,10),$scope.useBarcode);
+
+        }
+        else if($scope.userPrograms.length === 1){
+            $scope.showPrograms=false;
+            $scope.selectedProgramId=$scope.userPrograms[0].id;
+            loadStockCards(parseInt($scope.selectedProgramId,10),parseInt($scope.selectedFacilityId,10),$scope.useBarcode);
+
+        }
+    };
+
+    //loading stock cards...added some functionality to allow barcode
+    var loadStockCards=function(programId, facilityId,useBarcode){
         StockCardsByCategory.get(programId,facilityId).then(function(data){
             $scope.stockCardsToDisplay=data;
+            if(useBarcode){
+                //These codes have been added by Kelvin
+                if($scope.stockCardsToDisplay.length !== 0){
+                    angular.forEach($scope.stockCardsToDisplay,function(lineItem,index){
+                        if(lineItem.productCategory === "Vaccine"){
+                            $scope.productsInList = angular.copy(lineItem.stockCards);
+                            $scope.stockCardsToDisplay[index] = {};
+                            $scope.vaccineIndex = index;
+                        }
+                    });
+
+                }else{
+                    $scope.productsInList = [];
+                }
+            }else{
+
+            }
+
             VaccineAdjustmentReasons.get({programId:programId},function(data){
                 $scope.adjustmentTypes=data.adjustmentReasons;
             });
@@ -38,12 +373,14 @@ function BarcodeStockAdjustmentController($scope, $timeout,$window,$routeParams,
         $scope.showPrograms=true;
         //TODO: load stock cards on program change
         $scope.selectedProgramId=$scope.userPrograms[0].id;
-        loadStockCards(parseInt($scope.selectedProgramId,10),parseInt($scope.selectedFacilityId,10));
+        loadStockCards(parseInt($scope.selectedProgramId,10),parseInt($scope.selectedFacilityId,10),$scope.useBarcode);
+
     }
     else if($scope.userPrograms.length === 1){
         $scope.showPrograms=false;
         $scope.selectedProgramId=$scope.userPrograms[0].id;
-        loadStockCards(parseInt($scope.selectedProgramId,10),parseInt($scope.selectedFacilityId,10));
+        loadStockCards(parseInt($scope.selectedProgramId,10),parseInt($scope.selectedFacilityId,10),$scope.useBarcode);
+
     }
 
     $scope.date = new Date();
@@ -107,7 +444,6 @@ function BarcodeStockAdjustmentController($scope, $timeout,$window,$routeParams,
         console.log(JSON.stringify($scope.adjustmentForm));
         if($scope.adjustmentForm.$invalid)
         {
-            console.log(JSON.stringify($scope.adjustmentForm));
             $scope.showFormError=true;
             return;
         }
@@ -226,6 +562,7 @@ function BarcodeStockAdjustmentController($scope, $timeout,$window,$routeParams,
     };
 
 }
+
 BarcodeStockAdjustmentController.resolve = {
 
     homeFacility: function ($q, $timeout,UserFacilityList) {

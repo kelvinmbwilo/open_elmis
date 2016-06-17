@@ -1,3 +1,4 @@
+
 <div class="modal-header">
     <h3 openlmis-message="label.vaccine.stock.issue.voucher"></h3>
 </div>
@@ -6,11 +7,11 @@
 <div class="modal-body" style="{{maxModalBodyHeight}}">
     <div class="row-fluid ">
         <div class="info-box span12">
-            <div class="span3">
+            <div class="span2">
                 <strong for="facilityLabel" openlmis-message="label.vaccine.stock.distributed.to"></strong>
                 <span id='facility2' ng-bind="facilityToIssue.name"></span>
             </div>
-            <div class="span3">
+            <div class="span2">
                 <strong id='issueTypeLabel' openlmis-message="label.type"> </strong>:&nbsp;
                 <span id='issueType' ng-bind="facilityToIssue.type"></span>
             </div>
@@ -22,10 +23,11 @@
                        ui-date="{dateFormat: 'dd/mm/yy', changeYear: false, maxDate:'today',minDate:period.stringStartDate}"
                        ng-model="facilityToIssue.issueDate" ui-date-format="MM/dd/yyyy"/>
             </div>
-            <div class="span3">
-                <strong id="scan_area" >Scan Barcode </strong>:&nbsp; {{ barcode_string }} <br/>
-                <input  id="barcode_string" type="text" class="form-control" ng-model="barcode_string" ng-change="scanLotNumber(barcode_string)"/><br>
-
+            <div class="span5">
+                <strong id="scan_area" >Scan Barcode </strong>:&nbsp;
+                <input  id="barcode_string" type="text" class="form-control" ng-model="barcode_string" ng-change="scanLotNumber(barcode_string)"/>&nbsp;&nbsp;&nbsp;
+                <span><input style="height: 19px;width: 19px; margin:-1px 4px 0 0;vertical-align:middle;cursor:pointer;" type="checkbox" ng-model="data.allowMultipleScan"> Allow Scan To add Doses  </span>
+                <br><small>** Allow Scan To add Doses checked will add one box in each scan</small>
             </div>
         </div>
     </div>

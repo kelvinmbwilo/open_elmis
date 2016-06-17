@@ -38,6 +38,8 @@
     .rnr-table .table-bordered th.p-column, .rnr-table .table-bordered td.p-column{
         border-right:solid 3px #ddd !important;
     }
+
+
 </style>
 
 <div >
@@ -63,6 +65,14 @@
                  ng-show="message"></div>
         </div>
         <br/>
+        <button ng-if="data.showReport" ng-click="produceIssuingPDF()" >Download PDF</button>
+        <button ng-if="data.showReport" ng-click="cancelPDF()" >Close</button>
+        <div ng-show="data.showReport">
+            <div id="exportthis">
+                <div ng-include="'partials/issue-report-printout.html'"></div>
+            </div>
+        </div>
+
 
         <div class="rnr-table" style="background-color: #fff; padding: 5px">
             <select style="min-width:300px !important" ui-select2
@@ -100,9 +110,13 @@
                             </th>
                         </tr>
                         <tr>
-                            <th colspan="2">
+                            <th>
                                 <span openlmis-message="label.period" class="cell-text"></span>:
                                 <strong id='periodLabel' ng-bind="routineFacility.currentPeriod.name"> </strong>
+                            </th>
+                            <th>
+                                <span ng-show="routineFacility.status ==='RECEIVED'"><input style="height: 19px;width: 19px; margin:-1px 4px 0 0;vertical-align:middle;cursor:pointer;"  type="checkbox" ng-model="useBarcode"/> Use Barcode: </span>
+                                <span ng-show="(routineFacility.status !== 'RECEIVED' && routineFacility.status === undefined && routineFacility.status !=='PENDING')"><input style="height: 19px;width: 19px; margin:-1px 4px 0 0;vertical-align:middle;cursor:pointer;" type="checkbox" ng-model="useBarcode"/> Use Barcode: </span>
                             </th>
                         </tr>
                         <tr>
@@ -122,11 +136,9 @@
                                 <input ng-show="(routineFacility.status !== 'RECEIVED' && routineFacility.status === undefined && routineFacility.status !=='PENDING')"
                                        ng-click="showIssueModal(routineFacility,'ROUTINE')"
                                        type="submit" class="btn btn-primary" openlmis-message="button.add">
-                                <br><span ng-show="(routineFacility.status !== 'RECEIVED' && routineFacility.status === undefined && routineFacility.status !=='PENDING')">Use Barcode: <input type="checkbox" ng-model="useBarcode"/></span>
                                 <input ng-show="routineFacility.status ==='RECEIVED'"
                                        ng-click="showIssueModal(routineFacility,'EMERGENCE')"
                                        type="submit" class="btn btn-primary" openlmis-message="button.add">
-                                <br><span ng-show="routineFacility.status ==='RECEIVED'">Use Barcode: <input type="checkbox" ng-model="useBarcode"/></span>
                                 <input uib-popover="I appeared on mouse enter!" popover-trigger="mouseenter"
                                        ng-show="routineFacility.status === 'PENDING'"
                                        ng-click="showPODModal(routineFacility)"

@@ -107,7 +107,7 @@ function SaveIssueController($scope,$location, $window,$timeout,StockEvent,SaveD
                  SaveDistribution.save(distribution,function(distribution){
                       $scope.showMessages();
                       $scope.closeIssueModal();
-                      $scope.distributionId=distribution.distributionId;
+                      $scope.distributionId=distribution.distributionId.id;
                       var url = '/vaccine/orderRequisition/issue/print/'+$scope.distributionId;
                       printWindow.location.href=url;
                  });

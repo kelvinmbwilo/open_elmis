@@ -21,6 +21,9 @@ function BarcodeMassDistributionController($scope,$http,$location, $document,$wi
     $scope.distributionType='ROUTINE';
     $scope.UnScheduledFacility=undefined;
     $scope.maxModalBodyHeight='max-height:'+parseInt($document.height() * 0.46,10)+'px !important';
+    $scope.data = {};
+    $scope.data.allowMultipleScan = true;
+    $scope.data.showReport = false;
     $scope.loadSupervisedFacilities=function(programId){
         OneLevelSupervisedFacilities.get({programId:programId},function(data){
             $scope.supervisedFacilities=data.facilities;
@@ -85,23 +88,20 @@ function BarcodeMassDistributionController($scope,$http,$location, $document,$wi
     $scope.updateCurrentTotal1  = function(product,lot){
         var vials_per_box = product.packaging.vialsperbox;
         var doses_per_vials = product.packaging.dosespervial;
-        console.log("single lot:",lot)
         if(lot){
             var boxes = (lot.boxes === '')?0:lot.boxes;
             var vials = (lot.vials === '')?0:lot.vials;
             var num = 0;
-            console.log("boxes:",boxes)
-            console.log("vials:",vials)
-            console.log("vials_per_box:",vials_per_box)
-            console.log("doses_per_vials:",boxes)
             if(boxes != 0){
                 num += boxes*vials_per_box*doses_per_vials;
-                console.log("result:",num)
             }if(vials != 0){
+                if(vials >= vials_per_box){
+                    lot.boxes = lot.boxes + Math.floor(vials / vials_per_box)
+                    vials = vials % vials_per_box;
+                    lot.vials = vials % vials_per_box;
+                }
                 num += doses_per_vials*vials;
-                console.log("vial result:",num)
             }
-            console.log("result:",num)
             lot.quantity = num;
             var totalCurrentLots = 0;
             if(product.lots !== undefined)
@@ -116,7 +116,6 @@ function BarcodeMassDistributionController($scope,$http,$location, $document,$wi
             else{
                 product.quantity=product.quantity;
             }
-            console.log(product.quantity)
         }else{
             var boxes = (product.boxes === '')?0:product.boxes;
             var vials = (product.vials === '')?0:product.vials;
@@ -222,7 +221,6 @@ function BarcodeMassDistributionController($scope,$http,$location, $document,$wi
         console.log("Error:" + data);
     });
 
-    $scope.data = {};
     $scope.data.loading_item = false;
 
     //react to scanning of lot number
@@ -281,6 +279,27 @@ function BarcodeMassDistributionController($scope,$http,$location, $document,$wi
 
     };
 
+    //producing pdf for issuing report
+    $scope.produceIssuingPDF = function(){
+        html2canvas(document.getElementById('exportthis'), {
+            onrendered: function (canvas) {
+                var data = canvas.toDataURL();
+                var docDefinition = {
+                    content: [{
+                        image: data,
+                        width: 1100,
+                    }]
+                };
+                pdfMake.createPdf(docDefinition).download("Score_Details.pdf");
+            }
+        });
+    };
+
+    //close pdf view
+    $scope.cancelPDF = function(){
+      $scope.data.showReport = false;
+    };
+
     //finding an item from the gtin Lookup table
     $scope.getItemByGTIN = function(barcode_object,listItems){
         var item = {available:false,gtinInformation:false};
@@ -308,17 +327,26 @@ function BarcodeMassDistributionController($scope,$http,$location, $document,$wi
                                             if($scope.checkLOtInList(item.lots,barcode_object.lot_number)){
                                                 angular.forEach(item.lots,function(singleLot){
                                                     if(singleLot.lotCode == barcode_object.lot_number){
-                                                        singleLot.boxes++;
-                                                        $scope.updateCurrentTotal1(item,singleLot);
+                                                        if($scope.data.allowMultipleScan){
+                                                            singleLot.boxes++;
+                                                            $scope.updateCurrentTotal1(item,singleLot);
+                                                        }
                                                     }
 
                                                 });
                                             }else{
-                                                productLot.boxes = 1;
-                                                productLot.vials = 0;
-                                                item.lots.push(productLot);
-                                                var indexToUse = item.lots.length -1;
-                                                $scope.updateCurrentTotal1(item,item.lots[indexToUse]);
+                                                if($scope.data.allowMultipleScan){
+                                                    productLot.boxes = 1;
+                                                    productLot.vials = 0;
+                                                    item.lots.push(productLot);
+                                                    var indexToUse = item.lots.length -1;
+                                                    $scope.updateCurrentTotal1(item,item.lots[indexToUse]);
+                                                }else{
+                                                    productLot.boxes = 0;
+                                                    productLot.vials = 0;
+                                                    item.lots.push(productLot);
+                                                }
+
                                             }
                                         }
                                     });
@@ -326,15 +354,23 @@ function BarcodeMassDistributionController($scope,$http,$location, $document,$wi
                                 }else{
                                     var productToPush = angular.copy(product);
                                     productToPush.lots = [];
-                                    productToPush.boxes = 1;
-                                    productToPush.vials = 0;
-                                    productLot.boxes = 1;
-                                    productLot.vials = 0;
-                                    productToPush.lots.push(productLot);
-                                    $scope.updateCurrentTotal1(productToPush,productLot);
-                                    console.log(productToPush);
+                                    if($scope.data.allowMultipleScan){
+                                        productToPush.boxes = 1;
+                                        productToPush.vials = 0;
+                                        productLot.boxes = 1;
+                                        productLot.vials = 0;
+                                        productToPush.lots.push(productLot);
+                                        $scope.updateCurrentTotal1(productToPush,productLot);
+                                        $scope.facilityToIssue.productsToIssueByCategory[$scope.vaccineIndex].productsToIssue.push(productToPush);
+                                    }else{
+                                        productToPush.boxes = 0;
+                                        productToPush.vials = 0;
+                                        productLot.boxes = 0;
+                                        productLot.vials = 0;
+                                        productToPush.lots.push(productLot);
+                                        $scope.facilityToIssue.productsToIssueByCategory[$scope.vaccineIndex].productsToIssue.push(productToPush);
+                                    }
 
-                                    $scope.facilityToIssue.productsToIssueByCategory[$scope.vaccineIndex].productsToIssue.push(productToPush);
                                 }
                             }
                         });

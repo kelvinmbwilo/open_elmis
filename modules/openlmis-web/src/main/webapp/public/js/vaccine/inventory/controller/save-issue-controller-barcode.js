@@ -47,22 +47,30 @@ function BarcodeBaSaveIssueController($scope,$location, $window,$timeout,StockEv
         distribution.lineItems=[];
         distribution.distributionType=$scope.facilityToIssue.type;
         distribution.status="PENDING";
+
+        var distribution1 = angular.copy(distribution);
         $scope.facilityToIssue.productsToIssueByCategory.forEach(function(category){
 
             category.productsToIssue.forEach(function(product){
                 if(product.quantity >0)
                 {
                     var list = {};
+                    var list1 = {};
                     list.productId = product.productId;
                     list.quantity=product.quantity;
+                    list1.quantity=product.quantity;
+                    list1.productId = product.productId;
+                    list1.productName = product.name;
                     if(product.lots !==undefined && product.lots.length >0)
                     {
                         list.lots = [];
+                        list1.lots = [];
                         product.lots.forEach(function(l)
                         {
                             if(l.quantity !==null && l.quantity >0)
                             {
                                 var lot = {};
+                                var lot1 = {};
                                 var event ={};
                                 event.type="ISSUE";
                                 event.productCode =product.productCode;
@@ -77,7 +85,16 @@ function BarcodeBaSaveIssueController($scope,$location, $window,$timeout,StockEv
                                 lot.lotId = l.lotId;
                                 lot.vvmStatus=l.vvmStatus;
                                 lot.quantity = l.quantity;
+
+                                lot1.lotId = l.lotId;
+                                lot1.vvmStatus=l.vvmStatus;
+                                lot1.quantity = l.quantity;
+                                lot1.expireDate = l.expirationDate;
+                                lot1.lotCode = l.lotCode;
+                                lot1.productName = product.name;
+
                                 list.lots.push(lot);
+                                list1.lots.push(lot1);
                                 events.push(event);
                             }
 
@@ -96,10 +113,14 @@ function BarcodeBaSaveIssueController($scope,$location, $window,$timeout,StockEv
                         events.push(event);
                     }
                     distribution.lineItems.push(list);
+                    distribution1.lineItems.push(list1);
                 }
             });
         });
-        console.log(distribution);
+
+        $scope.data.finalDistribution = angular.copy(distribution1);
+        $scope.data.finalDistribution.facilityName = $scope.facilityToIssue.name;
+        console.log("distribution",$scope.data.finalDistribution);
 
 
         StockEvent.save({facilityId:$scope.homeFacility.id},events, function (data) {
@@ -108,13 +129,27 @@ function BarcodeBaSaveIssueController($scope,$location, $window,$timeout,StockEv
                 SaveDistribution.save(distribution,function(distribution){
                     $scope.showMessages();
                     $scope.closeIssueModal();
-                    $scope.distributionId=distribution.distributionId;
+                    $scope.distributionId=distribution.distributionId.id;
+                    $scope.data.finalDistribution.voucherNumber = distribution.distributionId.voucherNumber;
                     var url = '/vaccine/orderRequisition/issue/print/'+$scope.distributionId;
-                    printWindow.location.href=url;
+                    $scope.data.showReport = true;
+                    //html2canvas(document.getElementById('exportthis'), {
+                    //    onrendered: function (canvas) {
+                    //        var data = canvas.toDataURL();
+                    //        var docDefinition = {
+                    //            content: [{
+                    //                image: data,
+                    //                width: 1100,
+                    //            }]
+                    //        };
+                    //        pdfMake.createPdf(docDefinition).download(distribution.distributionId.voucherNumber +".pdf");
+                    //    }
+                    //});
+                    //printWindow.location.href=url;
                 });
             }
         });
-        printWindow= $window.open('about:blank','_blank');
+        //printWindow= $window.open('about:blank','_blank');
 
     };
 

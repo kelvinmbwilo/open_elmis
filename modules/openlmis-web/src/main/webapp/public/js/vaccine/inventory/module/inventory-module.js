@@ -10,11 +10,11 @@
  * You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-angular.module('vaccine-inventory', ['openlmis', 'ngTable','ui.bootstrap','angularCombine','ui.bootstrap.modal','ui.bootstrap.pagination'])
+angular.module('vaccine-inventory', ['openlmis', 'ngTable','ui.bootstrap','angularCombine','ui.bootstrap.modal','ui.bootstrap.pagination','barcodeGenerator'])
     .config(['$routeProvider', function ($routeProvider) {
         $routeProvider.
             when('/stock-adjustment', {controller:StockAdjustmentController, templateUrl:'partials/stock-adjustment.html',resolve:StockAdjustmentController.resolve}).
-            when('/stock-adjustment-barcode', {controller:StockAdjustmentController, templateUrl:'partials/stock-adjustment-barcode.html',resolve:BarcodeStockAdjustmentController.resolve}).
+            when('/stock-adjustment-barcode', {controller:BarcodeStockAdjustmentController, templateUrl:'partials/stock-adjustment-barcode.html',resolve:BarcodeStockAdjustmentController.resolve}).
             when('/receive', {controller:ReceiveStockController, templateUrl:'partials/receive-stock.html',reloadOnSearch:false,resolve:ReceiveStockController.resolve}).
             when('/receive_barcode', {controller:ReceiveStockController, templateUrl:'partials/receive-stock-barcode.html',reloadOnSearch:false,resolve:BarcodeReceiveStockController.resolve}).
             when('/mass-distribution', {controller:MassDistributionController, templateUrl:'partials/mass-distribution.html',reloadOnSearch:false,resolve:MassDistributionController.resolve}).

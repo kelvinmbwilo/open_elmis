@@ -64,7 +64,7 @@ public class VaccineInventoryDistributionService {
     }
 
 
-    public Long save(VaccineDistribution distribution, Long userId) {
+    public VaccineDistribution save(VaccineDistribution distribution, Long userId) {
         //Get supervised facility period
         Facility homeFacility = facilityService.getHomeFacility(userId);
         Long homeFacilityId = homeFacility.getId();
@@ -106,7 +106,7 @@ public class VaccineInventoryDistributionService {
                 }
             }
         }
-        return distribution.getId();
+        return distribution;
     }
 
     private String generateVoucherNumber(Long facilityId, Long programId) {

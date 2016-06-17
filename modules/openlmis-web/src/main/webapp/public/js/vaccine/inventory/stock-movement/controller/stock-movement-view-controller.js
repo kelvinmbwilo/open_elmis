@@ -202,7 +202,7 @@ function StockMovementViewController($scope, $window,$timeout,SaveDistribution,S
               StockEvent.save({facilityId:homeFacility.id},events,function(data){
                    SaveDistribution.save(distribution,function(distribution) {
                        $scope.message = "label.form.Submitted.Successfully";
-                       var url = '/vaccine/orderRequisition/issue/print/'+distribution.distributionId;
+                       var url = '/vaccine/orderRequisition/issue/print/'+distribution.distributionId.id;
                        printWindow.location.href=url;
                        $timeout(function(){
                            $window.location = '/public/pages/vaccine/inventory/dashboard/index.html#/stock-on-hand';
