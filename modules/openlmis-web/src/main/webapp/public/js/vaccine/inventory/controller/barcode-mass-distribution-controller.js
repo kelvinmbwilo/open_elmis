@@ -55,10 +55,6 @@ function BarcodeMassDistributionController($scope,$http,$location, $document,$wi
 
     //update the total doses for the product and the boxes and vials for a updated value
     $scope.updateCurrentTotal=function(product,lot){
-        var vials_per_box = product.packaging.vialsperbox;
-        var doses_per_vials = product.packaging.dosespervial;
-        var dosesInBox = vials_per_box*doses_per_vials;
-
         var totalCurrentLots = 0;
         if(product.lots !== undefined)
         {
@@ -75,11 +71,15 @@ function BarcodeMassDistributionController($scope,$http,$location, $document,$wi
 
         //update boxes and vials as doses change
         if(lot){
-            lot.boxes = parseInt(lot.quantity / dosesInBox);
-            lot.vials = lot.quantity % dosesInBox;
+            if(product.packaging){
+                var vials_per_box = product.packaging.vialsperbox;
+                var doses_per_vials = product.packaging.dosespervial;
+                var dosesInBox = vials_per_box*doses_per_vials;
+                lot.boxes = parseInt(lot.quantity / dosesInBox);
+                lot.vials = lot.quantity % dosesInBox;
+            }
         }else{
-            product.boxes = parseInt(product.quantity / dosesInBox);
-            product.vials = product.quantity % dosesInBox;
+
         }
 
     };

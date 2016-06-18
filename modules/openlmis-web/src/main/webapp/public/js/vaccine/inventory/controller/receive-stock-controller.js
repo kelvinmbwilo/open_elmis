@@ -437,8 +437,7 @@ function ReceiveStockController($scope,$filter,$http, Lot,StockCards,manufacture
                         }
 
                      });
-
-
+                        console.log("Event:",JSON.stringify(events))
                     StockEvent.update({facilityId:homeFacility.id},events, function (data) {
                          if(data.success && $scope.hasStock)
                          {

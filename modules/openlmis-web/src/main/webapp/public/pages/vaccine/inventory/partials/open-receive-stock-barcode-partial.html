@@ -1,7 +1,6 @@
 <div class="alert alert-info" ng-show="!hasStock" openlmis-message="message.stock.initialize"></div>
-<label>Scan Item / Type Batch No</label><input id="barcode_string" type="text" class="form-control" ng-model="barcode_string" ng-change="scanLotNumber(barcode_string)">
-<span ng-show="data.loading_item"><img src="/public/images/loader.gif"> loading information..</span>
-<span ng-show="data.error_loading_item"><img src="/public/images/warning.png"> No Information Found.</span>
+<span ng-show="data.loading_item" style="text-align: center"><img src="/public/images/loader.gif"> loading information..</span>
+<span ng-show="data.error_loading_item" style="color: red; text-align: center"> Packaging Information not Found.</span>
 <br><br>
 
 <div class="rnr-table">
@@ -26,7 +25,7 @@
                 <span class="cell-text" ng-bind="product.product.primaryName"></span>
             </td>
             <td rowspan="{{product.lots.length}}" class="col-product cell-input last-row disabled">
-                <span class="cell-text" ng-if="product.batchTracked" >{{sumLots(product)}}</span>
+                <span class="cell-text" ng-if="product.batchTracked" >{{sumLots(product) || '-' }}</span>
                 <span class="cell-text" ng-if="!product.batchTracked" ng-bind="product.quantity"></span>
             </td>
             <td  class="col-lot cell-input cell-text disabled" ng-class="{'last-row':product.lots.length === 1, 'skip':!product.batchTracked}">

@@ -252,14 +252,12 @@ function BarcodeStockAdjustmentController($scope, $http, $timeout,$window,$route
     $scope.updateCurrentTotal1  = function(product,lot){
         var vials_per_box = product.packaging.vialsperbox;
         var doses_per_vials = product.packaging.dosespervial;
-        console.log("single lot:",lot)
         if(lot){
             var boxes = (lot.boxes === '')?0:lot.boxes;
             var vials = (lot.vials === '')?0:lot.vials;
             var num = 0;
             if(boxes != 0){
                 num += boxes*vials_per_box*doses_per_vials;
-                console.log("result:",num)
             }if(vials != 0){
                 if(vials >= vials_per_box){
                     lot.boxes = lot.boxes + Math.floor(vials / vials_per_box)
@@ -267,9 +265,7 @@ function BarcodeStockAdjustmentController($scope, $http, $timeout,$window,$route
                     lot.vials = vials % vials_per_box;
                 }
                 num += doses_per_vials*vials;
-                console.log("vial result:",num)
             }
-            console.log("result:",num)
             lot.quantity = num;
             var totalCurrentLots = 0;
             if(product.lots !== undefined)

@@ -90,7 +90,7 @@
                                   ng-show="product.lots === undefined"></span>
                 </td>
                 <!--boxes-->
-                <td class="col-general cell-input" ng-class="{'last-row':product.lots.length==1}">
+                <td class="col-general cell-input" ng-class="{'last-row':product.lots.length==1}" ng-if="category.productCategory == 'Vaccine'">
                     <input ng-show="product.lots.length > 0" min="{{0}}" max="{{ getMaximumBoxes(product,product.lots[0].quantityOnHand) }}" name="boxes"
                            ng-model="product.lots[0].boxes" id="boxes_{{ product.lots[0].lotCode }}"
                            ng-change="updateCurrentTotal1(product,product.lots[0])" numeric-validator="positiveInteger"
@@ -102,7 +102,7 @@
                            title="Boxes To Issue"
                     />
                     <!--lose vials-->
-                <td class="col-general cell-input" ng-class="{'last-row':product.lots.length==1}">
+                <td class="col-general cell-input" ng-class="{'last-row':product.lots.length==1}"  ng-if="category.productCategory == 'Vaccine'">
                     <input ng-show="product.lots.length > 0" min="{{0}}" max="{{ getMaximumLoseVials(product,product.lots[0].quantityOnHand,product.lots[0].boxes) }}" name="vials" ng-model="product.lots[0].vials"
                            ng-change="updateCurrentTotal1(product,product.lots[0])" numeric-validator="positiveInteger"
                            maxlength="8" type="number"/>
@@ -113,7 +113,19 @@
                            title="Lose Vials To Issue"
                     />
                     <!--doses-->
-                <td class="col-general cell-input" ng-class="{'last-row':product.lots.length==1}">
+                <td class="col-general cell-input" ng-class="{'last-row':product.lots.length==1}"  ng-if="category.productCategory !== 'Vaccine'" colspan="3">
+                    <input ng-show="product.lots.length > 0" min="{{0}}" max="{{product.lots[0].quantityOnHand}}" name="quantity" ng-model="product.lots[0].quantity"
+                           ng-change="updateCurrentTotal(product,product.lots[0])" numeric-validator="positiveInteger"
+                           divisible-by-presentation="{{product.presentation}}"
+                           maxlength="8" type="number"/>
+                    <input ng-show="product.lots === undefined" min="{{0}}"
+                           max="{{product.totalQuantityOnHand}}" name="quantity" ng-model="product.quantity"
+                           ng-change="updateCurrentTotal(product)" numeric-validator="positiveInteger"
+                           maxlength="8" type="number" divisible-by-presentation="{{product.presentation}}"
+                           title="Quantity To Issue"
+                    />
+                </td>
+                <td class="col-general cell-input" ng-class="{'last-row':product.lots.length==1}" ng-if="category.productCategory == 'Vaccine'">
                     <input ng-show="product.lots.length > 0" min="{{0}}" max="{{product.lots[0].quantityOnHand}}" name="quantity" ng-model="product.lots[0].quantity"
                            ng-change="updateCurrentTotal(product,product.lots[0])" numeric-validator="positiveInteger"
                            divisible-by-presentation="{{product.presentation}}"
@@ -148,7 +160,7 @@
                     <span class="cell-text" ng-bind="lot.quantityOnHand | number"></span>
                 </td>
                 <!--boxes-->
-                <td class="col-general cell-input" ng-class="{'last-row':$last}">
+                <td class="col-general cell-input" ng-class="{'last-row':$last}"  ng-if="category.productCategory == 'Vaccine'">
                     <input ng-disabled="(product.quantityRequired < product.lots[$index -1].quantityOnHand) || (product.quantityRequested > product.lots[$index -1].quantityOnHand && (product.lots[$index -1].quantity ===undefined || (product.lots[$index -1].quantity < product.lots[$index -1].quantityOnHand)))"
                            ng-show="product.lots.length > 0" min="{{0}}" max="{{ getMaximumBoxes(product,lot.quantityOnHand) }}"
                            name="lotBoxes{{$index}}" ng-model="lot.boxes" id="boxes_{{lots.lotCode }}"
@@ -156,7 +168,7 @@
                            maxlength="8" type="number" />
                 </td>
                 <!--loose vials-->
-                <td class="col-general cell-input" ng-class="{'last-row':$last}">
+                <td class="col-general cell-input" ng-class="{'last-row':$last}"  ng-if="category.productCategory == 'Vaccine'">
                     <input ng-disabled="(product.quantityRequired < product.lots[$index -1].quantityOnHand) || (product.quantityRequested > product.lots[$index -1].quantityOnHand && (product.lots[$index -1].quantity ===undefined || (product.lots[$index -1].quantity < product.lots[$index -1].quantityOnHand)))"
                            ng-show="product.lots.length > 0" min="{{0}}" max="{{ getMaximumLoseVials(product,lot.quantityOnHand,lot.boxes) }}"
                            name="lotVials{{$index}}" ng-model="lot.vials"
@@ -164,7 +176,14 @@
                            maxlength="8" type="number"/>
                 </td>
                 <!--doses-->
-                <td class="col-general cell-input" ng-class="{'last-row':$last}">
+                <td class="col-general cell-input" ng-class="{'last-row':$last}"  ng-if="category.productCategory == 'Vaccine'">
+                    <input ng-disabled="(product.quantityRequired < product.lots[$index -1].quantityOnHand) || (product.quantityRequested > product.lots[$index -1].quantityOnHand && (product.lots[$index -1].quantity ===undefined || (product.lots[$index -1].quantity < product.lots[$index -1].quantityOnHand)))"
+                           ng-show="product.lots.length > 0" min="{{0}}" max="{{lot.quantityOnHand}}"
+                           name="lotQuantity{{$index}}" ng-model="lot.quantity"
+                           ng-change="updateCurrentTotal(product,lot)" numeric-validator="positiveInteger"
+                           maxlength="8" type="number" />
+                </td>
+                <td class="col-general cell-input" ng-class="{'last-row':$last}"  ng-if="category.productCategory != 'Vaccine'" colspan="3">
                     <input ng-disabled="(product.quantityRequired < product.lots[$index -1].quantityOnHand) || (product.quantityRequested > product.lots[$index -1].quantityOnHand && (product.lots[$index -1].quantity ===undefined || (product.lots[$index -1].quantity < product.lots[$index -1].quantityOnHand)))"
                            ng-show="product.lots.length > 0" min="{{0}}" max="{{lot.quantityOnHand}}"
                            name="lotQuantity{{$index}}" ng-model="lot.quantity"

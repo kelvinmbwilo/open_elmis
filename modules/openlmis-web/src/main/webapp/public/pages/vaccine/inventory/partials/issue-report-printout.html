@@ -38,8 +38,8 @@
             </tr>
         </table>
     </div>
-    <table style="width:812px ">
-        <tr style="background-color: #0e90d2">
+    <table style="width:812px;border-collapse: collapse; " border="1">
+        <tr style="background-color: #0e90d2; height: 60px">
             <td>Product</td>
             <td>Batch #</td>
             <td>Expiry Date</td>
@@ -47,7 +47,7 @@
             <td>Doses Issued</td>
         </tr>
         <tbody ng-repeat=" vaccine in data.finalDistribution.lineItems">
-            <tr ng-repeat="lot in vaccine.lots">
+            <tr ng-repeat="lot in vaccine.lots" style="height: 60px;">
                 <td>{{ lot.productName }}</td>
                 <td>{{ lot.lotCode }}</td>
                 <td>{{ lot.expireDate | date :  "MMM d, y"}}</td>
