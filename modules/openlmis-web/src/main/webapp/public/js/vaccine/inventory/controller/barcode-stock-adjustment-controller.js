@@ -33,12 +33,6 @@ function BarcodeStockAdjustmentController($scope,$log, $http, $timeout,$window,$
             localStorageService.add('gtin_lookup',JSON.stringify(data.gitn_lookup));
             $log.info('gtin lookup saved locally')
         });
-
-        $log.info('saving Stock by category localy')
-        StockCardsByCategory.get(programId,facilityId).then(function(data){
-            localStorageService.add('stock_card_by_category',JSON.stringify(data));
-        });
-        
     };
     $scope.addToLocal();
 
@@ -62,20 +56,44 @@ function BarcodeStockAdjustmentController($scope,$log, $http, $timeout,$window,$
             $scope.barcode.lot_number = "";
             $scope.barcode.gtin = "";
             $scope.barcode.expiry = "";
-            if(barcodeString.length > 45){
-                var n = barcodeString.lastIndexOf("21");
-                $scope.barcode.expiry = barcodeString.substring(21,27);
-                $scope.barcode.gtin = barcodeString.substring(5,19);
-                $scope.barcode.lot_number = barcodeString.substring(29,n);
-            }else if(barcodeString.length >= 29){
-                $scope.barcode.lot_number = barcodeString.substring(29);
-                $scope.barcode.expiry = barcodeString.substring(21,27);
-                $scope.barcode.gtin = barcodeString.substring(5,19);
+            //check for the GS1 character
+            if(barcodeString.substring(0,3) === "]d2"){
+                if(barcodeString.length > 45){
+                    var n = barcodeString.lastIndexOf("21");
+                    $scope.barcode.expiry = barcodeString.substring(21,27);
+                    $scope.barcode.gtin = barcodeString.substring(5,19);
+                    $scope.barcode.lot_number = barcodeString.substring(29,n);
+                }else if(barcodeString.length >= 29){
+                    $scope.barcode.lot_number = barcodeString.substring(29);
+                    $scope.barcode.expiry = barcodeString.substring(21,27);
+                    $scope.barcode.gtin = barcodeString.substring(5,19);
+                }else{
+                    $scope.data.error_loading_gtin = true;
+                    $scope.data.error_loading_item = false;
+                    $scope.data.loading_item = false;
+                }
+            }else if(barcodeString.substring(0,2) === "01"){
+                if(barcodeString.length > 45){
+                    var n = barcodeString.lastIndexOf("21");
+                    $scope.barcode.expiry = barcodeString.substring(18,24);
+                    $scope.barcode.gtin = barcodeString.substring(2,16);
+                    $scope.barcode.lot_number = barcodeString.substring(26,n);
+                }else if(barcodeString.length >= 29){
+                    $scope.barcode.lot_number = barcodeString.substring(26);
+                    $scope.barcode.expiry = barcodeString.substring(18,24);
+                    $scope.barcode.gtin = barcodeString.substring(2,16);
+                }else{
+                    $scope.data.error_loading_gtin = true;
+                    $scope.data.error_loading_item = false;
+                    $scope.data.loading_item = false;
+                }
+
             }else{
                 $scope.data.error_loading_gtin = true;
                 $scope.data.error_loading_item = false;
                 $scope.data.loading_item = false;
             }
+
 
             $scope.data.loading_item = true;
             $scope.barcode.formatedDate = $scope.formatDate(new Date("20"+$scope.barcode.expiry.replace(/(.{2})/g,"$1-").slice(0, -1)));
