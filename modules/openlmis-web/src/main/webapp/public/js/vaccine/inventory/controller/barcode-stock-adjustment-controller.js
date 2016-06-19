@@ -8,7 +8,7 @@
  * You should have received a copy of the Mozilla Public License along with this program. If not, see http://www.mozilla.org/MPL/
  */
 
-function BarcodeStockAdjustmentController($scope, $http, $timeout,$window,$routeParams,StockCardsByCategory,configurations,StockEvent,localStorageService,homeFacility,VaccineAdjustmentReasons,UserFacilityList) {
+function BarcodeStockAdjustmentController($scope,$log, $http, $timeout,$window,$routeParams,StockCardsByCategory,configurations,StockEvent,localStorageService,homeFacility,VaccineAdjustmentReasons,UserFacilityList) {
 
     //Get Home Facility
     $scope.currentStockLot = undefined;
@@ -25,9 +25,30 @@ function BarcodeStockAdjustmentController($scope, $http, $timeout,$window,$route
         $("#barcode_string").focus();
     });
 
+    //put all values in the local storage
+    $scope.addToLocal = function(){
+        $log.info('saving gtin lookup locally')
+        $http.get('/vaccine/gitn_lookup/all').success(function(data) {
+            $scope.gtin_lookups = data.gitn_lookup;
+            localStorageService.add('gtin_lookup',JSON.stringify(data.gitn_lookup));
+            $log.info('gtin lookup saved locally')
+        });
+
+        $log.info('saving Stock by category localy')
+        StockCardsByCategory.get(programId,facilityId).then(function(data){
+            localStorageService.add('stock_card_by_category',JSON.stringify(data));
+        });
+        
+    };
+    $scope.addToLocal();
+
     //pull all gtin information
+    //@todo Put these data in local storage and update the method to fetch from local store
     $http.get('/vaccine/gitn_lookup/all').success(function(data) {
         $scope.gtin_lookups = data.gitn_lookup;
+        var se1 = localStorageService.add('gtin_lookup',JSON.stringify(data.gitn_lookup));
+        var se = localStorageService.get('gtin_lookup')
+        console.log(se)
     }).
     error(function(data) {
         console.log("Error:" + data);
@@ -123,7 +144,6 @@ function BarcodeStockAdjustmentController($scope, $http, $timeout,$window,$route
                         angular.forEach(lots,function(productLot){
                             if(productLot.lot.lotCode == barcode_object.lot_number && barcode_object.formatedDate == productLot.lot.expirationDate){
                                 item.available = true;
-                                console.log('nimeipata lot')
                                 //adding products to list of items to be displayed
                                 if(!$scope.stockCardsToDisplay[$scope.vaccineIndex].productCategory) {
                                     $scope.stockCardsToDisplay[$scope.vaccineIndex].productCategory = "Vaccine";
@@ -333,6 +353,7 @@ function BarcodeStockAdjustmentController($scope, $http, $timeout,$window,$route
 
     //loading stock cards...added some functionality to allow barcode
     var loadStockCards=function(programId, facilityId,useBarcode){
+        //@todo Put these data in local storage and update the method to fetch from local store
         StockCardsByCategory.get(programId,facilityId).then(function(data){
             $scope.stockCardsToDisplay=data;
             if(useBarcode){
@@ -567,6 +588,7 @@ BarcodeStockAdjustmentController.resolve = {
 
         $timeout(function () {
             //Home Facility
+            //@todo Put these data in local storage and update the method to fetch from local store
             UserFacilityList.get({}, function (data) {
                 homeFacility = data.facilityList[0];
                 deferred.resolve(homeFacility);
@@ -579,6 +601,7 @@ BarcodeStockAdjustmentController.resolve = {
         var deferred = $q.defer();
         var configurations={};
         $timeout(function () {
+            //@todo Put these data in local storage and update the method to fetch from local store
             AllVaccineInventoryConfigurations.get(function(data)
             {
                 configurations=data;
