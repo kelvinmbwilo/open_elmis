@@ -138,7 +138,8 @@
                     />
                 </td>
                 <td class="cell-input disabled last-row" rowspan="{{product.lots.length}}">
-                    <span class="cell-text" ng-bind="product.quantity | number"></span>
+                    <span class="" >{{ product.quantity | number }}
+                    <a title="Remove the Item from distribution list" class="" ng-if="category.productCategory == 'Vaccine'" style="cursor: pointer;text-align: right" ng-click="removeFromLineItems(product)">x</a></span>
                 </td>
                 <td ng-if="routineFacility.status !== 'RECEIVED'" class="cell-input disabled last-row"
                     rowspan="{{product.lots.length}}">

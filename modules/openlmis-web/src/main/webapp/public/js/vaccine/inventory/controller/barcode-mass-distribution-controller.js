@@ -11,7 +11,7 @@
  */
 
 
-function BarcodeMassDistributionController($scope,$http,$location, $document,$window,configurations,$timeout,homeFacility,OneLevelSupervisedFacilities,FacilityWithProducts,StockCardsByCategory,StockEvent,SaveDistribution,localStorageService,$anchorScroll) {
+function BarcodeMassDistributionController($scope,$http,$log,$location, $document,$window,configurations,$timeout,homeFacility,OneLevelSupervisedFacilities,FacilityWithProducts,StockCardsByCategory,StockEvent,SaveDistribution,localStorageService,$anchorScroll) {
 
     $scope.userPrograms=configurations.programs;
     $scope.period=configurations.period;
@@ -323,6 +323,51 @@ function BarcodeMassDistributionController($scope,$http,$location, $document,$wi
       $scope.data.showReport = false;
     };
 
+    //check if there is another batch in the system for that product that expires earlier
+    $scope.expireSonner = function(barcode_object,lots){
+      var return_object = {'available':false,item:{}};
+        if(lots.length <= 1){
+
+        }else{
+            console.log(lots);
+            angular.forEach(lots,function(lot,key){
+                if(!lot.quantityOnHand || lot.quantityOnHand <=0 || lot.quantityOnHand == ""){
+                    lots.splice(key, 1);
+                }
+            });
+            console.log(lots);
+            var sorted = lots.sort($scope.sort_by('expirationDate', false, function(a){return new Date(a).getTime()}));
+            if(sorted[0].lotCode == barcode_object.lot_number){
+                return_object.available = false;
+            }else{
+                return_object.available = true;
+                return_object.item = sorted[0];
+            }
+        }
+        return return_object;
+    };
+
+    $scope.sort_by = function(field, reverse, primer){
+
+        var key = primer ?
+            function(x) {return primer(x[field])} :
+            function(x) {return x[field]};
+
+        reverse = !reverse ? 1 : -1;
+
+        return function (a, b) {
+            return a = key(a), b = key(b), reverse * ((a > b) - (b > a));
+        }
+    };
+
+    $scope.removeFromLineItems = function(product){
+        angular.forEach($scope.facilityToIssue.productsToIssueByCategory[$scope.vaccineIndex].productsToIssue,function(product1,key){
+            if(product.productId == product1.productId){
+                $scope.facilityToIssue.productsToIssueByCategory[$scope.vaccineIndex].productsToIssue.splice(key,1);
+            }
+        })
+    };
+
     //finding an item from the gtin Lookup table
     $scope.getItemByGTIN = function(barcode_object,listItems){
         var item = {available:false,gtinInformation:false};
@@ -331,6 +376,15 @@ function BarcodeMassDistributionController($scope,$http,$location, $document,$wi
                 item.gtinInformation = true;
                 angular.forEach(listItems,function(product){
                     if(packagingInformation.productid == product.productId){
+
+                        //first check if there is another batch that expires sooner
+                        var ExpireSooner = $scope.expireSonner(barcode_object,product.lots);
+                        if(ExpireSooner.available){
+                            alert("There are "+ExpireSooner.item.quantityOnHand+" Doses of a batch ("+ExpireSooner.item.lotCode+") That expires ("+ExpireSooner.item.expirationDate+") Which is sooner than the selected item")
+                        }else{
+
+                        }
+
                         //append packaging information
                         product.packaging = packagingInformation;
 
