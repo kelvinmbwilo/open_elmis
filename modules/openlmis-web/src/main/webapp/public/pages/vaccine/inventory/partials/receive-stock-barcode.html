@@ -191,7 +191,218 @@
                 </div>
             </div>
             <div  ng-show="hasPermission('OPEN_STOCK_RECEIVING_PROCESS') || !hasStock">
-                <ng-include ng-if="useBarcode" src="'/public/pages/vaccine/inventory/partials/open-receive-stock-barcode-partial.html'"></ng-include>
+
+                <!--////////////////////////////////////////////////////////////////////////////////////////-->
+                <!--/////////////////////////////////////////////////////////////////////////////////////////-->
+                <!--//////////////////////////////////////////////////////////////////////////////////////////-->
+                <div ng-if="useBarcode" >
+                    <div class="alert alert-info" ng-show="!hasStock" openlmis-message="message.stock.initialize"></div>
+                    <div ng-show="hasPermission('OPEN_STOCK_RECEIVING_PROCESS') || !hasStock">
+                        <strong>Scan Item: </strong>&nbsp;&nbsp;<br>
+                        <input id="barcode_string" type="text" class="form-control" ng-model="barcode_string" ng-change="scanLotNumber(barcode_string)">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                <span style="opacity: .7">
+                                    <input style="height: 19px;width: 19px; margin:-1px 4px 0 0;vertical-align:middle;cursor:pointer;" type="checkbox" ng-model="data.allowMultipleScan">
+                                    Allow Scan To add Doses
+                                </span>
+                        <br><small style="opacity: .7">** Allow Scan To add Doses checked will add one box in each scan</small>
+                    </div>
+                    <span ng-show="data.loading_item" style="text-align: center"><img src="/public/images/loader.gif"> loading information..</span>
+                    <span ng-show="data.error_loading_item" style="color: red; text-align: center"> Packaging Information not Found.</span>
+                    <br><br>
+
+                    <div class="rnr-table">
+                        <table ng-show="receivedProducts.length>0" ng-form="openReceiveForm" id="podTable2" class="table table-bordered" fixed-table-header>
+                            <thead>
+                            <tr>
+                                <th class="col-product " openlmis-message="label.products"></th>
+                                <th class="col-quantity" style="max-width:160px !important" openlmis-message="label.stock.total.quantity"></th>
+                                <th class="col-lot"><span openlmis-message="label.stock.batch"></span></th>
+                                <th class="col-vvm-status"><span openlmis-message="label.stock.vvm"></span></th>
+                                <th class="col-quantity" style="max-width:160px !important">Boxes</th>
+                                <th class="col-quantity" style="max-width:160px !important">Lose Vials</th>
+                                <th class="col-quantity" style="max-width:160px !important">Doses</th>
+                                <th class="col-add-lot"><span openlmis-message="label.stock.add.lot"></span></th>
+                                <th class="col-add-product"><span openlmis-message="label.stock.add.product"></span></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat-start="product in receivedProducts" style="border-bottom:2px solid #333" ng-form="receivingForm2"
+                                ng-class-odd="'odd'" ng-class-even="'even'" ng-init="$index%2==0?(color='odd'): (color='even')">
+                                <td rowspan="{{product.lots.length}}" class="col-product cell-input last-row disabled">
+                                    <span class="cell-text" ng-bind="product.product.primaryName"></span>
+                                </td>
+                                <td rowspan="{{product.lots.length}}" class="col-product cell-input last-row disabled">
+                                    <span class="cell-text" ng-if="product.batchTracked" >{{sumLots(product) || '-' }}</span>
+                                    <span class="cell-text" ng-if="!product.batchTracked" ng-bind="product.quantity"></span>
+                                </td>
+                                <td  class="col-lot cell-input cell-text disabled" ng-class="{'last-row':product.lots.length === 1, 'skip':!product.batchTracked}">
+                            <span ng-if="product.batchTracked" class="cell-text" ng-if="product.lots.length > 0"
+                                  ng-bind="product.lots[0].lot.lotCode"></span>
+                                    <span ng-if="!product.batchTracked">&nbsp;</span>
+                                </td>
+                                <td class="col-count cell-input cell-text col-general disabled" ng-class="{'last-row':product.lots.length===1, 'skip':!product.vvmTracked}">
+                <span class="cell-text" >
+                    <select ng-if="product.vvmTracked" ui-select2 ng-required="product.vvmTracked"
+                            style="max-width:130px !important;min-width:130px !important"
+                            ng-options="i.value as i.name for i in vvmStatuses" name="vvmToAdd"
+                            ng-model="product.lots[0].vvmStatus">
+                        <option value="" openlmis-message="placeholder.select.vvmstatus"></option>
+                    </select>
+                </span>
+                                </td>
+                                <!--boxes-->
+                                <td  class="col-count cell-input col-general" ng-class="{'last-row':product.lots.length <=1}">
+                                    <input ng-if="product.batchTracked" ng-required="product.lots.length > 0" ng-if="product.lots.length > 0"
+                                           name="batchQuantity_{{$index}}_0" ng-model="product.lots[0].boxes_quantity" min="1" ng-change="updateValue(product.lots[0],product)"
+                                           type="number"/>
+                                </td>
+                                <!--lose vials-->
+                                <td  class="col-count cell-input col-general" ng-class="{'last-row':product.lots.length <=1}">
+                                    <input ng-if="product.batchTracked" ng-required="product.lots.length > 0" ng-if="product.lots.length > 0"
+                                           name="batchQuantity_{{$index}}_0" ng-model="product.lots[0].vials_quantity" min="1" ng-change="updateValue(product.lots[0],product)"
+                                           type="number"/>
+                                </td>
+                                <!--Doses-->
+                                <td  class="col-count cell-input col-general" ng-class="{'last-row':product.lots.length <=1}">
+                                    <input ng-if="product.batchTracked" ng-required="product.lots.length > 0" ng-if="product.lots.length > 0"
+                                           name="batchQuantity_{{$index}}_0" ng-model="product.lots[0].quantity" min="1"
+                                           divisible-by-presentation="{{getPresentation(product)}}"
+                                           type="number" ng-change="updateQuantity(product.lots[0],product)"/>
+                                    <input ng-required="!product.batchTracked" name="quantity_{{$index}}"
+                                           ng-if="!product.batchTracked" type="number" min="1" ng-model="product.quantity"
+                                           mdivisible-by-presentation="{{getPresentation(product)}}">
+                                </td>
+                                <td class="disabled"  ng-class="{'last-row':product.lots.length===1}">
+                                    <a ng-if="product.batchTracked" ng-if="product.lots[0]" href="" class="close"
+                                       ng-click="removeReceivedLot(product,product.lots[0])">&times;</a>
+
+                                </td>
+                                <td  class="last-row cell-input disabled" rowspan="{{product.lots.length}}">
+                                    <a class="close" ng-click="removeProduct(product)">&times;</a>
+                                </td>
+                            </tr>
+                            <tr ng-repeat-end ng-repeat="lot in product.lots" ng-show="!$first" ng-class="color">
+                                <td ng-if="product.batchTracked" ng-class="{'last-row':$last}"
+                                    class="col-lot  cell-input cell-text disabled">
+                                    <span class="cell-text" ng-bind="lot.lot.lotCode"></span>
+                                </td>
+                                <td  ng-class="{'last-row':$last}" class="col-count cell-input cell-text col-general disabled">
+                <span class="cell-text" >
+                    <select ng-if="product.batchTracked && product.vvmTracked" ng-required="product.vvmTracked" ui-select2
+                            style="max-width:130px !important;min-width:130px !important"
+                            ng-options="i.value as i.name for i in vvmStatuses" name="vvmToAdd"
+                            ng-model="lot.vvmStatus">
+                        <option value="" openlmis-message="placeholder.select.vvmstatus"></option>
+                    </select>
+                </span>
+                                    <span ng-if="product.batchTracked && !product.vvmTracked " class="skip">&nbsp;</span>
+                                </td>
+                                <!--Boxes-->
+                                <td ng-if="product.batchTracked" ng-class="{'last-row':$last}"
+                                    class="col-count cell-input col-general ">
+                                    <input name="batchBoxesQuantity_{{$parent.$index}}_{{$index}}" ng-required="product.batchTracked"
+                                           ng-model="lot.boxes_quantity" min="1" type="number" ng-change="updateValue(lot,product)"/>
+                                </td>
+                                <!--Vials-->
+                                <td ng-if="product.batchTracked" ng-class="{'last-row':$last}"
+                                    class="col-count cell-input col-general ">
+                                    <input name="batchVialsQuantity_{{$parent.$index}}_{{$index}}" ng-required="product.batchTracked"
+                                           ng-model="lot.vials_quantity" min="1" type="number" ng-change="updateValue(lot,product)"/>
+                                </td>
+                                <!--Doses-->
+                                <td ng-if="product.batchTracked" ng-class="{'last-row':$last}"
+                                    class="col-count cell-input col-general ">
+                                    <input name="batchQuantity_{{$parent.$index}}_{{$index}}" ng-required="product.batchTracked"
+                                           ng-model="lot.quantity" min="1" type="number"
+                                           divisible-by-presentation="{{getPresentation(product)}}" ng-change="updateQuantity(lot,product)"/>
+                                </td>
+                                <td ng-if="product.batchTracked" ng-class="{'last-row':$last}" class="disabled">
+                                    <a ng-if="lot" class="close" ng-click="removeReceivedLot(product,lot)">&times;</a>
+                                </td>
+                            </tr>
+                            </form>
+
+                            </tbody>
+                        </table>
+                    </div>
+
+
+                    <!--Lot Modal-->
+                    <div id="popup-box" ng-form="newLotForm" modal="newLotModal" options="{'backdrop':'static', 'escape':false}" style="width:60% !important;margin-left:-30% !important">
+                        <div class="modal-header">
+                            <div class="row-fluid">
+                                <div class="span4">
+                                    <h3 openlmis-message="header.vaccine.stock.create.lot"></h3>&nbsp;&nbsp;
+                                </div>
+                                <div class="span4">
+                                    <h3><span openlmis-message="label.product"></span>:{{newLot.product.primaryName}}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row-fluid ">
+                                <div class="span3">
+                                    <label id="newLotLotCodeLabel" for="newLot.lotCode">
+                                        <span openlmis-message="label.batchId "></span>
+                                        <span class="label-required">*</span>
+                                    </label>
+                                <span class="position-relative">
+                                    <input  ng-required="true" class="span12" type="text" ng-model="newLot.lotCode" value="" id="newLot.lotCode" />
+                                </span>
+                                </div>
+
+                                <div class="span3">
+                                    <label id="newLotExpirationDateLabel" for="newLot.expirationDate">
+                                        <span openlmis-message="label.expiryDate"></span>
+                                        <span class="label-required">*</span>
+                                    </label>
+                                <span class="position-relative">
+                                <input ng-required="true" class="span12" ng-required="true" id="newLot.expirationDate" name="expirationDate" type="text"
+                                       ui-date="{dateFormat: 'dd/mm/yy', changeYear: true, minDate:'today + 1'}"
+                                       ng-model="newLot.expirationDate"/>
+                                </span>
+                                </div>
+                                <div class="span3">
+                                    <label id="newLotManufacturerLabel" for="newLot.manufacturerName">
+                                        <span openlmis-message="label.manufacturer"></span>
+                                        <span class="label-required">*</span>
+                                    </label>
+                <span class="position-relative">
+                    <select style="width:90% !important;" ui-select2 ng-required="true" class="span12"
+                            ng-model="newLot.manufacturerName" id="newLot.manufacturerName"
+                            ng-options="manufacturer.name as manufacturer.name for manufacturer in manufacturers">
+                        <option value="" openlmis-message="placeholder.select.manufacturer"></option>
+                    </select>
+                </span>
+                                </div>
+                                <div class="span3">
+                                    <label id="newLotManufactureDateLabel" for="newLot.manufactureDate">
+                                        <span openlmis-message="label.manufacture.date "></span>
+                                    </label>
+                                <span class="position-relative">
+                                <input class="span12"  id="newLot.manufactureDate" name="newLot.manufactureDate" type="text"
+                                       ui-date="{dateFormat: 'dd/mm/yy', changeYear: true, maxDate:'today'}"
+                                       ng-model="newLot.manufactureDate"/>
+                                </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <input type="button" id="issueSubmit" class="btn btn-primary save-button"
+                                   ng-click="createLot()"
+                                   ng-disabled="newLotForm.$invalid"
+                                   openlmis-message="button.create"/>
+                            <input type="button" ng-click="closeNewLotModal();" class="btn btn-cancel"
+                                   openlmis-message="button.cancel"/>
+                        </div>
+
+                    </div>
+
+                    <!--Lot Modal Ends-->
+                </div>
+                <!--////////////////////////////////////////////////////////////////////////////////////////-->
+                <!--/////////////////////////////////////////////////////////////////////////////////////////-->
+                <!--//////////////////////////////////////////////////////////////////////////////////////////-->
                 <ng-include ng-if="!useBarcode" src="'/public/pages/vaccine/inventory/partials/open-receive-stock-partial.html'"></ng-include>
             </div>
         </div>
