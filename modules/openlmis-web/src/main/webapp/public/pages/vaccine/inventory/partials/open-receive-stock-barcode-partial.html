@@ -1,5 +1,5 @@
 <div class="alert alert-info" ng-show="!hasStock" openlmis-message="message.stock.initialize"></div>
-<div ng-if="!hasStock" ng-show="useBarcode && hasPermission('OPEN_STOCK_RECEIVING_PROCESS')">
+<div ng-show="hasPermission('OPEN_STOCK_RECEIVING_PROCESS') || !hasStock">
     <strong>Scan Item: </strong>&nbsp;&nbsp;<br>
     <input id="barcode_string" type="text" class="form-control" ng-model="barcode_string" ng-change="scanLotNumber(barcode_string)">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                 <span style="opacity: .7">
