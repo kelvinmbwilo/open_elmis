@@ -1,4 +1,13 @@
 <div class="alert alert-info" ng-show="!hasStock" openlmis-message="message.stock.initialize"></div>
+<div ng-if="!hasStock" ng-show="useBarcode && hasPermission('OPEN_STOCK_RECEIVING_PROCESS')">
+    <strong>Scan Item: </strong>&nbsp;&nbsp;<br>
+    <input id="barcode_string" type="text" class="form-control" ng-model="barcode_string" ng-change="scanLotNumber(barcode_string)">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                <span style="opacity: .7">
+                                    <input style="height: 19px;width: 19px; margin:-1px 4px 0 0;vertical-align:middle;cursor:pointer;" type="checkbox" ng-model="data.allowMultipleScan">
+                                    Allow Scan To add Doses
+                                </span>
+    <br><small style="opacity: .7">** Allow Scan To add Doses checked will add one box in each scan</small>
+</div>
 <span ng-show="data.loading_item" style="text-align: center"><img src="/public/images/loader.gif"> loading information..</span>
 <span ng-show="data.error_loading_item" style="color: red; text-align: center"> Packaging Information not Found.</span>
 <br><br>
