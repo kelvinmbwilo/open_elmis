@@ -391,7 +391,8 @@ function BarcodeMassDistributionController($scope,$http,$log,$location, $documen
                         //construct a lot
                         var lots = angular.copy(product.lots);
                         angular.forEach(lots,function(productLot){
-                            if(productLot.lotCode == barcode_object.lot_number && barcode_object.formatedDate == productLot.expirationDate){
+                            //if(productLot.lotCode == barcode_object.lot_number && barcode_object.formatedDate == productLot.expirationDate){
+                            if(productLot.lotCode == barcode_object.lot_number){
                                 item.available = true;
                                 //adding products to list of items to be displayed
                                 if(!$scope.facilityToIssue.productsToIssueByCategory[$scope.vaccineIndex].productCategory) {

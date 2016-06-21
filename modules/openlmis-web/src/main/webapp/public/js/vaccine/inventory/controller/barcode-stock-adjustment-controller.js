@@ -160,7 +160,8 @@ function BarcodeStockAdjustmentController($scope,$log, $http, $timeout,$window,$
                         //construct a lot
                         var lots = angular.copy(product.lotsOnHand);
                         angular.forEach(lots,function(productLot){
-                            if(productLot.lot.lotCode == barcode_object.lot_number && barcode_object.formatedDate == productLot.lot.expirationDate){
+                            //if(productLot.lot.lotCode == barcode_object.lot_number && barcode_object.formatedDate == productLot.lot.expirationDate){
+                            if(productLot.lot.lotCode == barcode_object.lot_number){
                                 item.available = true;
                                 //adding products to list of items to be displayed
                                 if(!$scope.stockCardsToDisplay[$scope.vaccineIndex].productCategory) {
