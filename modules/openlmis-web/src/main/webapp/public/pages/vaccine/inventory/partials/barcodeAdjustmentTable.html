@@ -184,7 +184,7 @@
                 <span class="cell-text" ng-bind="lot.quantityOnHand | number"></span>
             </td>
             <!--Boxes-->
-            <td ng-class="{'last-row':$last,'disabled':lot.isSkipped}" class="col-count cell-input col-general " ng-if="category.productCategory == 'Vaccine'">
+            <td ng-class="{'last-row':$last,'disabled':lot.isSkipped}" class="col-count cell-input col-general " ng-if="stock.productCategory == 'Vaccine'">
                 <input name="{{c.product.primaryName}} batch # {{lot.lot.lotCode}}" ng-required="!lot.isSkipped"
                        ng-disabled="lot.isSkipped"
                        ng-model="lot.boxes" maxlength="5" type="number" min="0"
